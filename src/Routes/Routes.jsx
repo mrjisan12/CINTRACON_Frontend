@@ -14,6 +14,7 @@ import UpcomingEvents from "../Pages/Client/UpcomingEvents/UpcomingEvents";
 import Announcement from "../Pages/Client/Announcement/Announcement";
 import Dashboard from "../Pages/Admin/Dashboard/Dashboard";
 import AllStudents from "../Pages/Admin/AllStudents/AllStudents";
+import ForgetPassword from "../Pages/Client/Authentication/ForgetPassword";
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
+      { path: "/forget-password", element: <ForgetPassword /> },
       { path: "/home", element: <HomePage /> },
       { path: "/all-students", element: <AllStudentsPage /> },
       { path: "/profile", element: <Profile /> },
