@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; // Add this import
 
 const Navbar = () => {
   return (
-    <nav className="bg-black text-white px-6 py-4 flex items-center justify-between">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-black/30 backdrop-blur-md text-white px-6 py-4 flex items-center justify-between transition-all duration-300">
       {/* Logo */}
       <div className="flex items-center space-x-2">
         <img
@@ -37,9 +38,11 @@ const Navbar = () => {
 
       {/* Get Started Button */}
       <div>
-        <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-full transition-colors duration-200">
-          Get Started
-        </button>
+        <Link to="/home">
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-full transition-colors duration-200">
+            Get Started
+          </button>
+        </Link>
       </div>
     </nav>
   );

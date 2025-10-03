@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../../Ui/Navbar";
 import Footer from "../../Ui/Footer";
 
@@ -11,7 +12,7 @@ const Landing = () => {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="flex flex-col md:flex-row items-center justify-between px-6 md:px-20 py-40 relative">
+      <section id="home" className="flex flex-col md:flex-row items-center justify-between px-6 md:px-20 py-40 relative">
         {/* Top-left Gradient */}
         <div className="absolute top-1 right-2 w-[600px] h-[600px] bg-gradient-to-tr from-[#5C4FEF] to-transparent rounded-full blur-3xl opacity-80 z-0"></div>
 
@@ -36,12 +37,16 @@ const Landing = () => {
     </span>
           </p>
           <div className="flex space-x-5 justify-center mt-8">
-            <button className="bg-[#030D37] hover:bg-[#061050] px-7 py-3 rounded-full font-medium">
-              Signup
-            </button>
-            <button className="bg-[#030D37] hover:bg-[#061050] px-7 py-3 rounded-full font-medium">
-               Login 
-            </button>
+            <Link to="/signup">
+    <button className="bg-[#030D37] hover:bg-[#061050] px-7 py-3 rounded-full font-medium">
+      Signup
+    </button>
+  </Link>
+  <Link to="/login">
+    <button className="bg-[#030D37] hover:bg-[#061050] px-7 py-3 rounded-full font-medium">
+      Login
+    </button>
+  </Link>
           </div>
         </div>
 
@@ -108,7 +113,7 @@ const Landing = () => {
       </section>
 
       {/* Team Section */}
-      <section className="px-6 md:px-10 py-10">
+      <section id="developers" className="px-6 md:px-10 py-10">
         <h2 className="text-6xl font-bold text-center mb-30">
           Developed by Team{" "}
           <span className="text-cyan-400" style={{ fontFamily: "'Audiowide', sans-serif" }}>
@@ -146,8 +151,8 @@ const Landing = () => {
         </div>
       </section>
 
-    {/* Reviews Section */}
-<section className="px-6 md:px-20 py-20 bg-black">
+      {/* Reviews Section */}
+      <section id="feedback" className="px-6 md:px-20 py-20 bg-black">
   <h2 className="text-6xl font-bold text-center mb-5 text-white">Our Reviews</h2>
   <p className="text-gray-400 text-center text-2xl mb-12">People use it, they love it</p>
   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
