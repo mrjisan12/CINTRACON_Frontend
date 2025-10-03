@@ -15,6 +15,7 @@ import Announcement from "../Pages/Client/Announcement/Announcement";
 import Dashboard from "../Pages/Admin/Dashboard/Dashboard";
 import AllStudents from "../Pages/Admin/AllStudents/AllStudents";
 import ForgetPassword from "../Pages/Client/Authentication/ForgetPassword";
+import CintraconAI from "../Pages/Client/CintraconAI/CintraconAI";
 import OTP from "../Pages/Client/Authentication/OTP";
 import ConfirmPass from "../Pages/Client/Authentication/ConfirmPass";
 
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
       { path: "/jobs", element: <JobPage /> },
       { path: "/upcoming-events", element: <UpcomingEvents /> },
       { path: "/announcement", element: <Announcement /> },
+      { path: "/cintracon-ai", element: <CintraconAI /> },
       
       // Admin Section
       { path: "/admin/dashboard", element: <Dashboard /> },
