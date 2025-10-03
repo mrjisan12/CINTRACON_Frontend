@@ -15,19 +15,21 @@ import Announcement from "../Pages/Client/Announcement/Announcement";
 import Dashboard from "../Pages/Admin/Dashboard/Dashboard";
 import AllStudents from "../Pages/Admin/AllStudents/AllStudents";
 import ForgetPassword from "../Pages/Client/Authentication/ForgetPassword";
+import OTP from "../Pages/Client/Authentication/OTP";
+import ConfirmPass from "../Pages/Client/Authentication/ConfirmPass";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Client />,
     children: [
-
       // Client Section
-
       { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
       { path: "/forget-password", element: <ForgetPassword /> },
+      { path: "/otp", element: <OTP /> },
+      { path: "/confirm-pass", element: <ConfirmPass /> },
       { path: "/home", element: <HomePage /> },
       { path: "/all-students", element: <AllStudentsPage /> },
       { path: "/profile", element: <Profile /> },
@@ -36,19 +38,11 @@ export const router = createBrowserRouter([
       { path: "/jobs", element: <JobPage /> },
       { path: "/upcoming-events", element: <UpcomingEvents /> },
       { path: "/announcement", element: <Announcement /> },
-
-
-
-
+      
       // Admin Section
       { path: "/admin/dashboard", element: <Dashboard /> },
       { path: "/admin/all-students", element: <AllStudents /> },
-
-
-
-
-
-
+      
       { path: "*", element: <NotFound /> },
     ],
   },
