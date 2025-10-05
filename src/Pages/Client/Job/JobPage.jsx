@@ -12,14 +12,17 @@ const JobPage = () => {
       location: "Dhaka, Bangladesh",
       type: "Full-time",
       deadline: "Dec 30, 2024",
-      postedTime: "2 hours ago",
+      duration: "9:00 AM - 6:00 PM",
       postedBy: {
         name: "Shahid Al Mamin",
         avatar: "/mamim.jpg"
       },
       image: "/job1.jpg",
-      gradient: "from-blue-500 to-purple-600",
-      buttonColor: "from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+      cardGradient: "from-blue-100/10 via-purple-100/5 to-indigo-100/10",
+      borderGradient: "from-blue-200 to-purple-200",
+      imageOverlay: "from-blue-100/30 via-purple-100/20 to-indigo-100/40",
+      buttonColor: "from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600",
+      accentColor: "blue"
     },
     {
       id: 2,
@@ -29,14 +32,17 @@ const JobPage = () => {
       location: "Remote",
       type: "Contract",
       deadline: "Jan 15, 2025",
-      postedTime: "5 hours ago",
+      duration: "10:00 AM - 7:00 PM",
       postedBy: {
         name: "Lamia Akter Jesmin",
         avatar: "/jesmin.jpeg"
       },
       image: "/job2.png",
-      gradient: "from-green-500 to-teal-600",
-      buttonColor: "from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700"
+      cardGradient: "from-emerald-100/10 via-teal-100/5 to-green-100/10",
+      borderGradient: "from-emerald-200 to-teal-200",
+      imageOverlay: "from-emerald-100/30 via-teal-100/20 to-green-100/40",
+      buttonColor: "from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600",
+      accentColor: "emerald"
     },
     {
       id: 3,
@@ -46,14 +52,17 @@ const JobPage = () => {
       location: "Uttara, Dhaka",
       type: "Part-time",
       deadline: "Dec 25, 2024",
-      postedTime: "1 day ago",
+      duration: "2:00 PM - 8:00 PM",
       postedBy: {
         name: "Nashrah Zakir Nawmi",
         avatar: "/nawmi.jpg"
       },
       image: "/job3.png",
-      gradient: "from-pink-500 to-rose-600",
-      buttonColor: "from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700"
+      cardGradient: "from-pink-100/10 via-rose-100/5 to-fuchsia-100/10",
+      borderGradient: "from-pink-200 to-rose-200",
+      imageOverlay: "from-pink-100/30 via-rose-100/20 to-fuchsia-100/40",
+      buttonColor: "from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600",
+      accentColor: "pink"
     },
     {
       id: 4,
@@ -63,14 +72,17 @@ const JobPage = () => {
       location: "Gulshan, Dhaka",
       type: "Full-time",
       deadline: "Jan 10, 2025",
-      postedTime: "3 hours ago",
+      duration: "8:30 AM - 5:30 PM",
       postedBy: {
         name: "Alif Mahmud Talha",
         avatar: "/alif.jpg"
       },
       image: "/job4.png",
-      gradient: "from-orange-500 to-red-600",
-      buttonColor: "from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700"
+      cardGradient: "from-amber-100/10 via-orange-100/5 to-red-100/10",
+      borderGradient: "from-amber-200 to-orange-200",
+      imageOverlay: "from-amber-100/30 via-orange-100/20 to-red-100/40",
+      buttonColor: "from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600",
+      accentColor: "amber"
     },
     {
       id: 5,
@@ -80,14 +92,17 @@ const JobPage = () => {
       location: "Banani, Dhaka",
       type: "Full-time",
       deadline: "Jan 5, 2025",
-      postedTime: "8 hours ago",
+      duration: "9:30 AM - 6:30 PM",
       postedBy: {
         name: "Miznur Rahman Jisan",
         avatar: "/jisan.jpg"
       },
       image: "/job5.png",
-      gradient: "from-indigo-500 to-blue-600",
-      buttonColor: "from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700"
+      cardGradient: "from-indigo-100/10 via-blue-100/5 to-violet-100/10",
+      borderGradient: "from-indigo-200 to-blue-200",
+      imageOverlay: "from-indigo-100/30 via-blue-100/20 to-violet-100/40",
+      buttonColor: "from-indigo-400 to-blue-500 hover:from-indigo-500 hover:to-blue-600",
+      accentColor: "indigo"
     },
     {
       id: 6,
@@ -97,14 +112,17 @@ const JobPage = () => {
       location: "Remote",
       type: "Contract",
       deadline: "Dec 28, 2024",
-      postedTime: "6 hours ago",
+      duration: "Flexible Hours",
       postedBy: {
         name: "Shahid Al Mamin",
         avatar: "/mamim.jpg"
       },
       image: "/job6.png",
-      gradient: "from-cyan-500 to-blue-600",
-      buttonColor: "from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+      cardGradient: "from-cyan-100/10 via-sky-100/5 to-blue-100/10",
+      borderGradient: "from-cyan-200 to-sky-200",
+      imageOverlay: "from-cyan-100/30 via-sky-100/20 to-blue-100/40",
+      buttonColor: "from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600",
+      accentColor: "cyan"
     }
   ];
 
@@ -124,91 +142,112 @@ const JobPage = () => {
         {/* Main Content */}
         <div className="flex-1">
           {/* Top Section */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
             <div className="text-center flex-1">
-              <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Find Your Dream Job
               </h1>
-              <p className="text-gray-300 text-sm mt-2">
+              <p className="text-gray-300 text-sm mt-1">
                 Discover amazing opportunities and take the next step in your career
               </p>
             </div>
-            <button className="ml-auto px-8 py-3 rounded-xl text-white font-semibold shadow-xl 
+            <button className="ml-auto px-6 py-2 rounded-lg text-white font-semibold shadow-lg 
               bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
-              transform hover:scale-105 transition-all duration-300">
+              transform hover:scale-105 transition-all duration-300 text-sm">
               Post a Job 
             </button>
           </div>
 
           {/* Job Cards Grid */}
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
             {jobs.map((job) => (
               <div 
                 key={job.id}
-                className="relative group bg-[#20222B] rounded-2xl overflow-hidden shadow-2xl border border-[#232A36] 
-                  hover:border-blue-500/50 transition-all duration-500 hover:transform hover:scale-105"
+                className={`relative bg-gradient-to-br ${job.cardGradient} backdrop-blur-sm rounded-xl overflow-hidden 
+                  border border-gray-500/20 transition-all duration-300 group cursor-pointer
+                  hover:scale-[1.02] hover:shadow-xl hover:border-${job.accentColor}-300/50`}
               >
-                {/* Subtle Gradient Overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${job.gradient} opacity-3 group-hover:opacity-5 transition-opacity duration-500`}></div>
+                {/* Light Border Glow */}
+                <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${job.borderGradient} opacity-0 
+                  group-hover:opacity-30 transition-opacity duration-300 -z-10`}></div>
                 
-                <div className="relative p-6">
+                <div className="relative">
                   {/* Job Image */}
-                  <div className="relative h-40 w-full mb-4 rounded-xl overflow-hidden">
+                  <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
                     <img 
                       src={job.image} 
                       alt={job.title} 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
                     />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${job.gradient} opacity-30 group-hover:opacity-40 transition-opacity duration-500`}></div>
-                  </div>
-
-                  {/* Job Title & Company */}
-                  <div className="mb-4">
-                    <h2 className="text-xl font-bold text-white mb-1">
-                      {job.title}
-                    </h2>
-                    <p className="text-gray-400 text-sm">{job.company}</p>
-                  </div>
-
-                  {/* Job Details - Clean & Simple */}
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <span className="text-green-400">💰</span>
-                      {job.salary}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <span className="text-blue-400">📍</span>
-                      {job.location}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <span className="text-purple-400">⏱️</span>
+                    {/* Light Image Gradient Overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-t ${job.imageOverlay} opacity-50 
+                      group-hover:opacity-60 transition-opacity duration-300`}></div>
+                    
+                    {/* Job Type Badge */}
+                    <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full">
                       {job.type}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
-                      <span className="text-red-400">🗓️</span>
-                      Deadline: {job.deadline}
+
+                    {/* Company Name on Image */}
+                    <div className="absolute bottom-3 left-3">
+                      <p className="text-gray-200 text-sm drop-shadow-lg font-medium">{job.company}</p>
                     </div>
                   </div>
 
-                  {/* Apply Button - Centered */}
-                  <div className="flex justify-center mb-4">
-                    <button className={`px-12 py-3 rounded-lg text-white font-semibold 
-                      bg-gradient-to-r ${job.buttonColor} transform hover:scale-105 
-                      transition-all duration-300 shadow-lg w-full max-w-xs`}>
-                      Apply Now
-                    </button>
-                  </div>
+                  {/* Card Content */}
+                  <div className="p-4">
+                    {/* Job Title - Below Image */}
+                    <div className="mb-3">
+                      <h2 className="text-lg font-bold text-white">
+                        {job.title}
+                      </h2>
+                    </div>
 
-                  {/* Posted By - Simple & Clean */}
-                  <div className="flex items-center justify-center gap-2 pt-3 border-t border-gray-700">
-                    <img 
-                      src={job.postedBy.avatar} 
-                      alt={job.postedBy.name}
-                      className="w-6 h-6 rounded-full border border-blue-500"
-                    />
-                    <div className="text-center">
-                      <p className="text-xs text-gray-400">Posted by {job.postedBy.name}</p>
-                      <p className="text-xs text-gray-500">{job.postedTime}</p>
+                    {/* Job Details */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-gray-300">
+                          <span className="text-green-300 text-sm">💰</span>
+                          <span className="text-xs font-medium">{job.salary}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-300">
+                          <span className="text-blue-300 text-sm">📍</span>
+                          <span className="text-xs">{job.location}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-gray-300">
+                          <span className="text-red-300 text-sm">🗓️</span>
+                          <span className="text-xs">Deadline: {job.deadline}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-gray-300">
+                          <span className="text-purple-300 text-sm">⏰</span>
+                          <span className="text-xs">{job.duration}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Apply Button */}
+                    <div className="flex justify-center mb-3">
+                      <button className={`px-4 py-1.5 rounded text-white font-semibold text-xs
+                        bg-gradient-to-r ${job.buttonColor} transform hover:scale-105 hover:shadow-lg
+                        transition-all duration-300 w-2/3`}>
+                        Apply Now
+                      </button>
+                    </div>
+
+                    {/* Posted By - With Avatar First */}
+                    <div className="flex items-center gap-2 pt-3 border-t border-gray-600/30">
+                      <img 
+                        src={job.postedBy.avatar} 
+                        alt={job.postedBy.name}
+                        className="w-6 h-6 rounded-full border border-blue-400"
+                      />
+                      <div>
+                        <p className="text-xs text-gray-400">Posted by</p>
+                        <p className="text-sm font-medium text-white">{job.postedBy.name}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
