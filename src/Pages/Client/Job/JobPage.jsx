@@ -1,15 +1,27 @@
-import React from 'react'
+import React, { useState } from 'react'
 import NavbarMain from '../../../Ui/NavbarMain'
 import LeftSideBar from '../../../Components/LeftSideBar'
 
 const JobPage = () => {
+  const [showPostModal, setShowPostModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    company: '',
+    salary: '',
+    location: '',
+    type: '',
+    deadline: '',
+    duration: ''
+  })
+
   const jobs = [
     {
       id: 1,
       title: "Frontend Developer",
       company: "TechNova Solutions",
       salary: "৳60,000 - ৳80,000",
-      location: "Dhaka, Bangladesh",
+      location: "Mohammodpur, Dhaka",
       type: "Full-time",
       deadline: "Dec 30, 2024",
       duration: "9:00 AM - 6:00 PM",
@@ -17,32 +29,28 @@ const JobPage = () => {
         name: "Shahid Al Mamin",
         avatar: "/mamim.jpg"
       },
+      postedTime: "2h ago",
       image: "/job1.jpg",
-      cardGradient: "from-blue-100/10 via-purple-100/5 to-indigo-100/10",
-      borderGradient: "from-blue-200 to-purple-200",
-      imageOverlay: "from-blue-100/30 via-purple-100/20 to-indigo-100/40",
-      buttonColor: "from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600",
-      accentColor: "blue"
+      buttonColor: "from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700",
+      borderColor: "border-blue-500/50 hover:border-blue-400"
     },
     {
       id: 2,
       title: "Backend Engineer",
       company: "CodeHub Technologies",
       salary: "৳70,000 - ৳90,000",
-      location: "Remote",
-      type: "Contract",
+      location: "Mirpur, Dhaka",
+      type: "Remote",
       deadline: "Jan 15, 2025",
-      duration: "10:00 AM - 7:00 PM",
+      duration: "Flexible Hours",
       postedBy: {
         name: "Lamia Akter Jesmin",
         avatar: "/jesmin.jpeg"
       },
-      image: "/job2.png",
-      cardGradient: "from-emerald-100/10 via-teal-100/5 to-green-100/10",
-      borderGradient: "from-emerald-200 to-teal-200",
-      imageOverlay: "from-emerald-100/30 via-teal-100/20 to-green-100/40",
-      buttonColor: "from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600",
-      accentColor: "emerald"
+      postedTime: "5h ago",
+      image: "/job2.jpg",
+      buttonColor: "from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700",
+      borderColor: "border-green-500/50 hover:border-green-400"
     },
     {
       id: 3,
@@ -57,16 +65,14 @@ const JobPage = () => {
         name: "Nashrah Zakir Nawmi",
         avatar: "/nawmi.jpg"
       },
-      image: "/job3.png",
-      cardGradient: "from-pink-100/10 via-rose-100/5 to-fuchsia-100/10",
-      borderGradient: "from-pink-200 to-rose-200",
-      imageOverlay: "from-pink-100/30 via-rose-100/20 to-fuchsia-100/40",
-      buttonColor: "from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600",
-      accentColor: "pink"
+      postedTime: "1d ago",
+      image: "/job3.jpg",
+      buttonColor: "from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700",
+      borderColor: "border-pink-500/50 hover:border-pink-400"
     },
     {
       id: 4,
-      title: "Data Scientist",
+      title: "Graphic Designer",
       company: "AI Innovations Ltd",
       salary: "৳80,000 - ৳1,00,000",
       location: "Gulshan, Dhaka",
@@ -77,12 +83,10 @@ const JobPage = () => {
         name: "Alif Mahmud Talha",
         avatar: "/alif.jpg"
       },
-      image: "/job4.png",
-      cardGradient: "from-amber-100/10 via-orange-100/5 to-red-100/10",
-      borderGradient: "from-amber-200 to-orange-200",
-      imageOverlay: "from-amber-100/30 via-orange-100/20 to-red-100/40",
-      buttonColor: "from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600",
-      accentColor: "amber"
+      postedTime: "3h ago",
+      image: "/job4.jpg",
+      buttonColor: "from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700",
+      borderColor: "border-orange-500/50 hover:border-orange-400"
     },
     {
       id: 5,
@@ -94,37 +98,68 @@ const JobPage = () => {
       deadline: "Jan 5, 2025",
       duration: "9:30 AM - 6:30 PM",
       postedBy: {
-        name: "Miznur Rahman Jisan",
+        name: "Mizanur Rahman Jisan",
         avatar: "/jisan.jpg"
       },
-      image: "/job5.png",
-      cardGradient: "from-indigo-100/10 via-blue-100/5 to-violet-100/10",
-      borderGradient: "from-indigo-200 to-blue-200",
-      imageOverlay: "from-indigo-100/30 via-blue-100/20 to-violet-100/40",
-      buttonColor: "from-indigo-400 to-blue-500 hover:from-indigo-500 hover:to-blue-600",
-      accentColor: "indigo"
+      postedTime: "8h ago",
+      image: "/job5.jpg",
+      buttonColor: "from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700",
+      borderColor: "border-indigo-500/50 hover:border-indigo-400"
     },
     {
       id: 6,
       title: "Mobile App Developer",
       company: "AppCraft Studios",
       salary: "৳55,000 - ৳75,000",
-      location: "Remote",
-      type: "Contract",
+      location: "Farmgate, Dhaka",
+      type: "Remote",
       deadline: "Dec 28, 2024",
       duration: "Flexible Hours",
       postedBy: {
         name: "Shahid Al Mamin",
         avatar: "/mamim.jpg"
       },
-      image: "/job6.png",
-      cardGradient: "from-cyan-100/10 via-sky-100/5 to-blue-100/10",
-      borderGradient: "from-cyan-200 to-sky-200",
-      imageOverlay: "from-cyan-100/30 via-sky-100/20 to-blue-100/40",
-      buttonColor: "from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600",
-      accentColor: "cyan"
+      postedTime: "6h ago",
+      image: "/job6.jpg",
+      buttonColor: "from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700",
+      borderColor: "border-cyan-500/50 hover:border-cyan-400"
     }
-  ];
+  ]
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+    // Simulate API call
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      console.log('Job posted:', formData)
+      setShowPostModal(false)
+      setFormData({
+        title: '',
+        company: '',
+        salary: '',
+        location: '',
+        type: '',
+        deadline: '',
+        duration: ''
+      })
+      alert('Job posted successfully!')
+    } catch (error) {
+      console.error('Error posting job:', error)
+      alert('Error posting job. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#181820]">
@@ -151,9 +186,12 @@ const JobPage = () => {
                 Discover amazing opportunities and take the next step in your career
               </p>
             </div>
-            <button className="ml-auto px-6 py-2 rounded-lg text-white font-semibold shadow-lg 
-              bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
-              transform hover:scale-105 transition-all duration-300 text-sm">
+            <button 
+              onClick={() => setShowPostModal(true)}
+              className="ml-auto px-6 py-2 rounded-lg text-white font-semibold shadow-lg 
+                bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
+                transform hover:scale-105 transition-all duration-300 text-sm"
+            >
               Post a Job 
             </button>
           </div>
@@ -163,14 +201,9 @@ const JobPage = () => {
             {jobs.map((job) => (
               <div 
                 key={job.id}
-                className={`relative bg-gradient-to-br ${job.cardGradient} backdrop-blur-sm rounded-xl overflow-hidden 
-                  border border-gray-500/20 transition-all duration-300 group cursor-pointer
-                  hover:scale-[1.02] hover:shadow-xl hover:border-${job.accentColor}-300/50`}
+                className={`relative bg-[#20222B] rounded-xl overflow-hidden border-2 ${job.borderColor}
+                  transition-all duration-300 group cursor-pointer hover:scale-[1.02] hover:shadow-xl`}
               >
-                {/* Light Border Glow */}
-                <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${job.borderGradient} opacity-0 
-                  group-hover:opacity-30 transition-opacity duration-300 -z-10`}></div>
-                
                 <div className="relative">
                   {/* Job Image */}
                   <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
@@ -179,9 +212,8 @@ const JobPage = () => {
                       alt={job.title} 
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
                     />
-                    {/* Light Image Gradient Overlay */}
-                    <div className={`absolute inset-0 bg-gradient-to-t ${job.imageOverlay} opacity-50 
-                      group-hover:opacity-60 transition-opacity duration-300`}></div>
+                    {/* Dark Image Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
                     
                     {/* Job Type Badge */}
                     <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -197,57 +229,64 @@ const JobPage = () => {
                   {/* Card Content */}
                   <div className="p-4">
                     {/* Job Title - Below Image */}
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <h2 className="text-lg font-bold text-white">
                         {job.title}
                       </h2>
                     </div>
 
-                    {/* Job Details */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-gray-300">
-                          <span className="text-green-300 text-sm">💰</span>
-                          <span className="text-xs font-medium">{job.salary}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-300">
-                          <span className="text-blue-300 text-sm">📍</span>
-                          <span className="text-xs">{job.location}</span>
-                        </div>
+                    {/* Job Details - Single Column Layout */}
+                    <div className="space-y-3 mb-4">
+                      {/* Salary */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <span className="text-green-400 text-base">💰</span>
+                        <span className="text-sm font-medium">{job.salary}</span>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-gray-300">
-                          <span className="text-red-300 text-sm">🗓️</span>
-                          <span className="text-xs">Deadline: {job.deadline}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-300">
-                          <span className="text-purple-300 text-sm">⏰</span>
-                          <span className="text-xs">{job.duration}</span>
-                        </div>
+                      {/* Location */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <span className="text-blue-400 text-base">📍</span>
+                        <span className="text-sm">{job.location}</span>
+                      </div>
+                      
+                      {/* Deadline */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <span className="text-red-400 text-base">🗓️</span>
+                        <span className="text-sm">Deadline: {job.deadline}</span>
+                      </div>
+                      
+                      {/* Duration */}
+                      <div className="flex items-center gap-3 text-gray-300">
+                        <span className="text-purple-400 text-base">⏰</span>
+                        <span className="text-sm">{job.duration}</span>
                       </div>
                     </div>
 
                     {/* Apply Button */}
-                    <div className="flex justify-center mb-3">
-                      <button className={`px-4 py-1.5 rounded text-white font-semibold text-xs
+                    <div className="flex justify-center mb-4">
+                      <button className={`px-4 py-2 rounded-lg text-white font-semibold text-sm
                         bg-gradient-to-r ${job.buttonColor} transform hover:scale-105 hover:shadow-lg
-                        transition-all duration-300 w-2/3`}>
+                        transition-all duration-300 w-full`}>
                         Apply Now
                       </button>
                     </div>
 
-                    {/* Posted By - With Avatar First */}
-                    <div className="flex items-center gap-2 pt-3 border-t border-gray-600/30">
-                      <img 
-                        src={job.postedBy.avatar} 
-                        alt={job.postedBy.name}
-                        className="w-6 h-6 rounded-full border border-blue-400"
-                      />
-                      <div>
-                        <p className="text-xs text-gray-400">Posted by</p>
-                        <p className="text-sm font-medium text-white">{job.postedBy.name}</p>
+                    {/* Posted By - Avatar First, "Posted by" above Name, Time on Right */}
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-700">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={job.postedBy.avatar} 
+                          alt={job.postedBy.name}
+                          className="w-6 h-6 rounded-full border border-blue-500"
+                        />
+                        <div>
+                          <p className="text-xs text-gray-400">Posted by</p>
+                          <p className="text-sm font-medium text-white">{job.postedBy.name}</p>
+                        </div>
                       </div>
+                      <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">
+                        {job.postedTime}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -256,6 +295,169 @@ const JobPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Post Job Modal */}
+      {showPostModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-blue-500/50 shadow-2xl shadow-blue-500/30 max-h-[90vh] overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="relative p-6 border-b border-blue-500/30">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  💼 Post New Job
+                </h2>
+                <button
+                  onClick={() => setShowPostModal(false)}
+                  className="w-8 h-8 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-colors duration-200 border border-red-500/30"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-gray-400 mt-2">Fill in the basic job details to get started</p>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 max-h-[60vh] overflow-y-auto">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                
+                {/* Job Title & Company */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white font-semibold mb-2">📝 Job Title *</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., Frontend Developer"
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">🏢 Company *</label>
+                    <input
+                      type="text"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Company name"
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Salary & Location */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white font-semibold mb-2">💰 Salary *</label>
+                    <input
+                      type="text"
+                      name="salary"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., ৳60,000 - ৳80,000"
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">📍 Location *</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., Dhaka, Remote"
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Job Type & Deadline */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white font-semibold mb-2">⏱️ Job Type *</label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    >
+                      <option value="">Select Job Type</option>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Remote">Remote</option>
+                      <option value="Internship">Internship</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-white font-semibold mb-2">🗓️ Application Deadline *</label>
+                    <input
+                      type="date"
+                      name="deadline"
+                      value={formData.deadline}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Duration */}
+                <div>
+                  <label className="block text-white font-semibold mb-2">⏰ Working Hours *</label>
+                  <input
+                    type="text"
+                    name="duration"
+                    value={formData.duration}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="e.g., 9:00 AM - 6:00 PM, Flexible Hours"
+                    className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-blue-500/30 flex justify-end gap-3">
+              <button
+                onClick={() => setShowPostModal(false)}
+                className="px-6 py-2 bg-gray-600 text-white font-medium rounded-xl hover:bg-gray-700 transition-all duration-200 border border-gray-500/30"
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-500 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center gap-2 border border-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Posting...
+                  </>
+                ) : (
+                  <>
+                    <span>🚀</span>
+                    Post Job
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
