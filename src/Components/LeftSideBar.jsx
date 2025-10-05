@@ -71,7 +71,14 @@ const LeftSideBar = () => {
         <div className="text-gray-200 text-sm mb-2 font-semibold">Developers of CINTRACON</div>
         <ul className="flex flex-col gap-2">
           {devs.map((dev, idx) => (
-            <li key={idx} className="flex items-center gap-2">
+            <li
+              key={idx}
+              className="flex items-center gap-2 cursor-pointer hover:underline"
+              onClick={() => handleNav('/profile')}
+              tabIndex={0}
+              role="button"
+              aria-label={`Go to ${dev.name}'s profile`}
+            >
               <img src={dev.avatar} alt={dev.name} className="h-7 w-7 rounded-full object-cover" />
               <span className="text-gray-100 text-sm">{dev.name}</span>
             </li>

@@ -13,9 +13,28 @@ const NavbarMain = () => {
   const [dropdown, setDropdown] = React.useState(false);
   const [notificationOpen, setNotificationOpen] = React.useState(false);
   const [mobileMenu, setMobileMenu] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const notificationRef = React.useRef(null);
   const mobileMenuRef = React.useRef(null);
+
+  // Example user data for demo (replace with real data or API)
+  const users = [
+    { id: 1, name: 'Mizanur Rahman Jisan', avatar: '/jisan.jpg', department: 'CSE', semester: '3.2' },
+    { id: 2, name: 'Shahid Al Mamin', avatar: '/mamim.jpg', department: 'EEE', semester: '2.1' },
+    { id: 3, name: 'Lamia Akter Jesmin', avatar: '/jesmin.jpeg', department: 'BBA', semester: '1.2' },
+    { id: 4, name: 'Nashrah Zakir Nawmi', avatar: '/nawmi.jpg', department: 'CSE', semester: '3.1' },
+    { id: 5, name: 'Alif Mahmud Talha', avatar: '/alif.jpg', department: 'CSE', semester: '2.2' },
+    // ...more users
+  ];
+
+  const searchResults =
+    searchQuery.trim() === ''
+      ? users.slice(0, 5) // Show first 5 users as "history" when input is empty
+      : users.filter(u =>
+          u.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ).slice(0, 5);
 
   React.useEffect(() => {
     function handleClickOutside(event) {
@@ -49,16 +68,53 @@ const NavbarMain = () => {
         <span className="font-bold text-lg sm:text-xl md:text-2xl text-white tracking-wide">CINTRACON</span>
       </div>
       {/* Center: Search Bar (hidden on mobile) */}
-      <div className="hidden md:flex flex-1 justify-center ">
-        <div className="relative w-full max-w-md ">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><FaSearch /></span>
-          <input
-            type="text"
-            placeholder="Search CINTRACON"
-            className="w-full pl-10 pr-4 py-2 rounded-full bg-[#1E2939] text-white border-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
-          />
-        </div>
+      <div className="hidden md:flex flex-1 justify-center relative">
+  <div className="relative w-full max-w-md">
+    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+      <FaSearch />
+    </span>
+    <input
+      type="text"
+      placeholder="Search CINTRACON"
+      className="w-full pl-10 pr-4 py-2 rounded-full bg-[#1E2939] text-white border-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+      value={searchQuery}
+      onChange={e => setSearchQuery(e.target.value)}
+      onFocus={() => setShowSearchDropdown(true)}
+      onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
+    />
+    {/* Search Suggestion Dropdown */}
+    {showSearchDropdown && (
+      <div className="absolute left-0 top-12 w-full bg-[#232A36] rounded-xl shadow-lg border border-[#232A36] z-50 animate-fade-in">
+        {searchResults.length > 0 ? (
+          <ul>
+            {searchResults.map((user, idx) => (
+              <li
+                key={user.id}
+                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#20222B] cursor-pointer transition"
+                onMouseDown={() => {
+                  navigate(`/profile`);
+                  setShowSearchDropdown(false);
+                  setSearchQuery('');
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <img src={user.avatar} alt={user.name} className="h-9 w-9 rounded-full object-cover border-2 border-blue-500" />
+                  <span className="text-white font-medium">{user.name}</span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-xs text-blue-400">{user.department}</span>
+                  <span className="text-xs text-gray-400">{user.semester} Semester</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="px-4 py-3 text-gray-400 text-sm">No users found.</div>
+        )}
       </div>
+    )}
+  </div>
+</div>
 
       {/* Notification Bell with Dropdown */}
       <div className="relative" ref={notificationRef}>

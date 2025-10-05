@@ -19,7 +19,10 @@ const ProfileHeader = () => (
       <div className="text-white font-bold text-2xl md:text-3xl">Mizanur Rahman Jisan</div>
       <div className="text-gray-400 text-base md:text-lg">Software Engineer | Tech Enthusiast</div>
       <div className="flex items-center gap-3 mt-2">
-        <span className="bg-[#232A36] text-white px-4 py-1 rounded-full font-semibold">925 Points</span>
+        <span className="bg-[#232A36] text-white px-4 py-1 rounded-full font-semibold flex items-center gap-2">
+          <img src="/diamond.png" alt="Diamond" className="h-5 w-5 object-contain" />
+          925 Points
+        </span>
         <Link
           to="/profile-edit"
           className="bg-blue-600 text-white px-4 py-1 rounded-full font-semibold hover:bg-blue-700 transition"

@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import Client from "../Layout/Client";
+import AdminLayout from "../Layout/AdminLayout";
 import NotFound from "../pages/NotFound";
 import Landing from "../Pages/Client/Landing";
 import Login from "../Pages/Client/Authentication/Login";
@@ -18,6 +19,13 @@ import ForgetPassword from "../Pages/Client/Authentication/ForgetPassword";
 import CintraconAI from "../Pages/Client/CintraconAI/CintraconAI";
 import OTP from "../Pages/Client/Authentication/OTP";
 import ConfirmPass from "../Pages/Client/Authentication/ConfirmPass";
+import ForumPage from "../Pages/Client/Forum/ForumPage";
+import ForumManage from "../Pages/Admin/Forum/ForumManage";
+import NotesManage from "../Pages/Admin/Notes/NotesManage";
+import JobsManage from "../Pages/Admin/Jobs/JobsManage";
+import EventsManage from "../Pages/Admin/Events/EventsManage";
+import AnnouncementManage from "../Pages/Admin/Announcement/AnnouncementManage";
+import Settings from "../Pages/Admin/Settings/Settings";
 
 export const router = createBrowserRouter([
   {
@@ -37,13 +45,25 @@ export const router = createBrowserRouter([
       { path: "/profile-edit", element: <ProfileEdit /> },
       { path: "/note-sharing", element: <NoteSharing /> },
       { path: "/jobs", element: <JobPage /> },
+      { path: "/forum", element: <ForumPage /> },
       { path: "/upcoming-events", element: <UpcomingEvents /> },
       { path: "/announcement", element: <Announcement /> },
       { path: "/cintracon-ai", element: <CintraconAI /> },
       
       // Admin Section
-      { path: "/admin/dashboard", element: <Dashboard /> },
-      { path: "/admin/all-students", element: <AllStudents /> },
+      { path: "/admin", element: <AdminLayout />,
+        children: [
+          { path: "dashboard", element: <Dashboard /> },
+          { path: "all-students", element: <AllStudents /> },
+          { path: "forum", element: <ForumManage /> },
+          { path: "notes", element: <NotesManage /> },
+          { path: "jobs", element: <JobsManage /> },
+          { path: "events", element: <EventsManage /> },
+          { path: "announcement", element: <AnnouncementManage /> },
+          { path: "settings", element: <Settings /> },
+          { path: "*", element: <Dashboard /> },
+        ],
+      },
       
       { path: "*", element: <NotFound /> },
     ],
