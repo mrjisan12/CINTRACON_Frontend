@@ -14,18 +14,9 @@ const menu = [
 ];
 
 const devs = [
-  {
-    name: 'Miznur Rahman Jisan',
-    avatar: 'jisan.jpg',
-  },
-  {
-    name: 'Shahid Al Mamin',
-    avatar: 'mamim.jpg',
-  },
-  {
-    name: 'Lamia Akter Jesmin',
-    avatar: 'jesmin.jpeg',
-  },
+  { name: 'Miznur Rahman Jisan', avatar: 'jisan.jpg' },
+  { name: 'Shahid Al Mamin', avatar: 'mamim.jpg' },
+  { name: 'Lamia Akter Jesmin', avatar: 'jesmin.jpeg' },
 ];
 
 const LeftSideBar = () => {
@@ -34,8 +25,12 @@ const LeftSideBar = () => {
     navigate(to);
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   };
+
   return (
-    <aside className="bg-[#20222B] rounded-2xl mb-6 shadow p-4 flex flex-col gap-8 sticky top-20 min-h-[600px] w-full max-w-[250px] mx-auto">
+    <aside
+      className="bg-[#20222B] rounded-2xl mb-6 shadow p-4 flex flex-col gap-8 sticky top-20 min-h-[500px] w-full max-w-[260px] mx-auto overflow-y-auto hide-scrollbar"
+      style={{ maxHeight: 'calc(100vh - 100px)' }}
+    >
       {/* User Info */}
       <div
         className="flex items-center gap-3 mb-2 bg-[#23242C] rounded-xl px-2 py-2 cursor-pointer"
@@ -50,6 +45,7 @@ const LeftSideBar = () => {
           <div className="text-xs text-gray-300">2.5K Follower</div>
         </div>
       </div>
+
       {/* Menu */}
       <nav className="flex flex-col gap-2">
         {menu.map((item, idx) => (
@@ -66,8 +62,9 @@ const LeftSideBar = () => {
           </NavLink>
         ))}
       </nav>
+
       {/* Developers */}
-      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-3">
+      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-3 mb-10">
         <div className="text-gray-200 text-sm mb-2 font-semibold">Developers of CINTRACON</div>
         <ul className="flex flex-col gap-2">
           {devs.map((dev, idx) => (
@@ -85,7 +82,6 @@ const LeftSideBar = () => {
           ))}
         </ul>
       </div>
-      
     </aside>
   );
 };
