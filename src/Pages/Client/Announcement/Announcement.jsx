@@ -1,4 +1,3 @@
-// Announcement.jsx
 import React, { useState, useEffect } from "react";
 import LeftSideBar from "../../../Components/LeftSideBar";
 import NavbarMain from "../../../Ui/NavbarMain";
@@ -77,32 +76,32 @@ const Announcement = () => {
   const cardColors = [
     {
       primary: "#8B5CF6",
-      secondary: "rgba(139, 92, 246, 0.25)",
+      secondary: "rgba(139, 92, 246, 0.15)",
       gradient: "linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)",
     },
     {
       primary: "#06B6D4",
-      secondary: "rgba(6, 182, 212, 0.25)",
+      secondary: "rgba(6, 182, 212, 0.15)",
       gradient: "linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%)",
     },
     {
       primary: "#10B981",
-      secondary: "rgba(16, 185, 129, 0.25)",
+      secondary: "rgba(16, 185, 129, 0.15)",
       gradient: "linear-gradient(135deg, #10B981 0%, #34D399 100%)",
     },
     {
       primary: "#F59E0B",
-      secondary: "rgba(245, 158, 11, 0.25)",
+      secondary: "rgba(245, 158, 11, 0.15)",
       gradient: "linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)",
     },
     {
       primary: "#EF4444",
-      secondary: "rgba(239, 68, 68, 0.25)",
+      secondary: "rgba(239, 68, 68, 0.15)",
       gradient: "linear-gradient(135deg, #EF4444 0%, #F87171 100%)",
     },
     {
       primary: "#EC4899",
-      secondary: "rgba(236, 72, 153, 0.25)",
+      secondary: "rgba(236, 72, 153, 0.15)",
       gradient: "linear-gradient(135deg, #EC4899 0%, #F472B6 100%)",
     },
   ];
@@ -115,7 +114,6 @@ const Announcement = () => {
     });
   };
 
-  // FIXED: Read More button handler
   const handleReadMore = (announcement) => {
     setExpandedAnnouncement(announcement);
     if (typeof document !== "undefined") {
@@ -131,7 +129,7 @@ const Announcement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f0f23] via-[#1a1a2e] to-[#16213e]">
+    <div className="min-h-screen bg-[#181820]">
       <NavbarMain />
 
       {/* Expanded Announcement Modal */}
@@ -141,18 +139,18 @@ const Announcement = () => {
           role="dialog"
           aria-modal="true"
         >
-          <div className="relative w-full max-w-4xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-500/30">
+          <div className="relative w-full max-w-4xl bg-[#1E2130] rounded-3xl border border-[#2A2D3A] shadow-2xl">
             {/* Modal Header */}
-            <div className="relative p-6 border-b border-purple-500/30">
+            <div className="relative p-6 border-b border-[#2A2D3A]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {expandedAnnouncement.isNew && (
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30 shadow-lg">
+                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30">
                       🆕 NEW
                     </span>
                   )}
                   <span
-                    className={`px-3 py-1 text-white text-sm font-bold rounded-full border shadow-lg ${
+                    className={`px-3 py-1 text-white text-sm font-bold rounded-full border ${
                       expandedAnnouncement.author === "Cintracon Team"
                         ? "bg-purple-500/20 border-purple-500/30"
                         : "bg-blue-500/20 border-blue-500/30"
@@ -163,19 +161,19 @@ const Announcement = () => {
                 </div>
                 <button
                   onClick={handleCloseModal}
-                  className="w-8 h-8 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-colors duration-200 border border-red-500/30"
+                  className="w-8 h-8 flex items-center justify-center bg-[#2A2D3A] text-gray-400 rounded-full hover:bg-[#3A3D4A] hover:text-white transition-colors duration-200 border border-[#3A3D4A]"
                   aria-label="Close"
                 >
                   ✕
                 </button>
               </div>
 
-              <h2 className="text-2xl font-bold text-white mt-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold text-white mt-4">
                 {expandedAnnouncement.title}
               </h2>
 
               <div className="flex items-center gap-4 mt-3 text-sm">
-                <span className="text-gray-300">📅 {formatDate(expandedAnnouncement.date)}</span>
+                <span className="text-gray-400">📅 {formatDate(expandedAnnouncement.date)}</span>
               </div>
             </div>
 
@@ -187,10 +185,10 @@ const Announcement = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-purple-500/30 flex justify-end">
+            <div className="p-6 border-t border-[#2A2D3A] flex justify-end">
               <button
                 onClick={handleCloseModal}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-purple-500/25 border border-purple-500/30"
+                className="px-6 py-2 bg-[#2A2D3A] text-white font-bold rounded-xl hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A]"
               >
                 Close
               </button>
@@ -211,10 +209,8 @@ const Announcement = () => {
           <main className="flex-1">
             {/* Header Section */}
             <div className="mb-8">
-              <h1 className="text-4xl font-bold text-white mb-3 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                📢 Announcements
-              </h1>
-              <p className="text-gray-300 text-lg">
+              <h1 className="text-3xl font-bold text-white mb-2"> Announcement</h1>
+              <p className="text-gray-400">
                 Important updates from Cintracon Team and Platform Administration
               </p>
             </div>
@@ -227,28 +223,22 @@ const Announcement = () => {
                 return (
                   <div
                     key={announcement.id}
-                    className="group relative rounded-2xl p-6 border-2 transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-float"
+                    className="group rounded-2xl p-6 bg-[#1E2130] border-2 transition-all duration-300 hover:scale-105 cursor-pointer transform-gpu"
                     style={{
-                      animationDelay: `${index * 0.1}s`,
-                      background: `linear-gradient(135deg, ${colors.secondary}, rgba(30, 33, 48, 0.9))`,
                       borderColor: colors.primary,
-                      boxShadow: `0 8px 32px ${colors.primary}30`,
                     }}
                   >
-                    {/* Glow Effect (was intercepting clicks) */}
-                    <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-600/0 via-pink-600/5 to-blue-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
                     {/* Header */}
-                    <div className="relative flex items-start justify-between mb-4">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-2">
                         {announcement.isNew && (
-                          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30 shadow-lg animate-pulse">
+                          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30">
                             🆕 NEW
                           </span>
                         )}
                       </div>
                       <span
-                        className={`px-3 py-1 text-white text-xs font-bold rounded-full border shadow-lg ${
+                        className={`px-3 py-1 text-white text-xs font-bold rounded-full border ${
                           announcement.author === "Cintracon Team"
                             ? "bg-purple-500/20 border-purple-500/30"
                             : "bg-blue-500/20 border-blue-500/30"
@@ -259,31 +249,26 @@ const Announcement = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="relative text-white font-bold text-lg mb-3 leading-tight group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all duration-300">
+                    <h3 className="text-white font-bold text-lg mb-3 leading-tight">
                       {announcement.title}
                     </h3>
 
                     {/* Content Preview */}
-                    <p className="text-gray-300 text-sm leading-relaxed mb-4 line-clamp-3">
+                    <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-3">
                       {announcement.content}
                     </p>
 
                     {/* Footer */}
-                    <div className="relative flex items-center justify-between pt-4 border-t border-white/10">
-                      <div className="text-gray-300 text-xs">📅 {formatDate(announcement.date)}</div>
+                    <div className="flex items-center justify-between pt-4 border-t border-[#2A2D3A]">
+                      <div className="text-gray-400 text-xs">📅 {formatDate(announcement.date)}</div>
 
-                      {/* FIXED: Read More Button */}
+                      {/* Read More Button */}
                       <button
                         onClick={() => handleReadMore(announcement)}
-                        className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold rounded-lg transform group-hover:scale-110 transition-all duration-200 shadow-lg shadow-purple-500/25 border border-purple-500/30 hover:from-purple-500 hover:to-pink-700"
+                        className="px-3 py-1 bg-[#2A2D3A] text-white text-sm font-bold rounded-lg hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A]"
                       >
                         Read More
                       </button>
-                    </div>
-
-                    {/* Shine Effect (was intercepting clicks) */}
-                    <div className="pointer-events-none absolute inset-0 rounded-2xl overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                     </div>
                   </div>
                 );
@@ -292,17 +277,6 @@ const Announcement = () => {
           </main>
         </div>
       </div>
-
-      {/* Custom Animations */}
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };

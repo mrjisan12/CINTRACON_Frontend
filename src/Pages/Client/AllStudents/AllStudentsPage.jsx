@@ -14,6 +14,16 @@ const students = [
 const DEPARTMENTS = ["All", "CSE", "EEE", "BBA", "Pharm", "Civil", "English", "Law"];
 const SEMESTERS = ["All", "1.1", "1.2", "2.1", "2.2", "3.1", "3.2", "4.1", "4.2"];
 
+// Different colors for each card border
+const cardColors = [
+  "#8B5CF6", // Purple
+  "#06B6D4", // Cyan
+  "#10B981", // Emerald
+  "#F59E0B", // Amber
+  "#EF4444", // Red
+  "#EC4899", // Pink
+];
+
 const AllStudentsPage = () => {
   const [query, setQuery] = useState("");
   const [dept, setDept] = useState("All");
@@ -121,6 +131,9 @@ const AllStudentsPage = () => {
                   key={idx}
                   className="group h-full w-full rounded-3xl p-6 xl:p-7 bg-gradient-to-b from-[#20222B] to-[#1b1d25] ring-1 ring-[#2A2D3A] shadow-sm
                              hover:shadow-xl hover:ring-[#3a3f51] transition relative overflow-hidden"
+                  style={{
+                    border: `2px solid ${cardColors[idx % cardColors.length]}`,
+                  }}
                 >
                   {/* top gradient bar */}
                   <div className="pointer-events-none absolute inset-x-0 top-0 h-1 opacity-0 group-hover:opacity-100 transition bg-gradient-to-r from-blue-600 to-purple-600" />
