@@ -4,6 +4,8 @@ import LeftSideBar from '../../../Components/LeftSideBar'
 
 const JobPage = () => {
   const [showPostModal, setShowPostModal] = useState(false)
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [selectedImage, setSelectedImage] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -128,6 +130,11 @@ const JobPage = () => {
     }
   ]
 
+  const handleImageClick = (imageSrc) => {
+    setSelectedImage(imageSrc)
+    setShowImageModal(true)
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -248,7 +255,10 @@ const JobPage = () => {
               >
                 <div className="relative">
                   {/* Job Image */}
-                  <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
+                  <div 
+                    className="relative h-48 w-full rounded-t-xl overflow-hidden cursor-pointer"
+                    onClick={() => handleImageClick(job.image)}
+                  >
                     <img 
                       src={job.image} 
                       alt={job.title} 
@@ -265,6 +275,15 @@ const JobPage = () => {
                     {/* Company Name on Image */}
                     <div className="absolute bottom-3 left-3">
                       <p className="text-gray-200 text-sm drop-shadow-lg font-medium">{job.company}</p>
+                    </div>
+
+                    {/* Image Zoom Icon */}
+                    <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3-3H7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
 
@@ -337,6 +356,64 @@ const JobPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {showImageModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all duration-300"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-12 right-0 z-10 w-10 h-10 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-all duration-200 border border-red-500/30 hover:scale-110"
+            >
+              ✕
+            </button>
+            
+            {/* Image Container */}
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/20 border-2 border-blue-500/30 bg-black">
+              <img 
+                src={selectedImage} 
+                alt="Job Preview" 
+                className="max-w-full max-h-[80vh] object-contain"
+              />
+              
+              {/* Loading Indicator */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity duration-300">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+
+            {/* Navigation Arrows (if you have multiple images) */}
+            <button 
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 hover:scale-110"
+              onClick={() => {
+                // Add navigation logic here if needed
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <button 
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 hover:scale-110"
+              onClick={() => {
+                // Add navigation logic here if needed
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Post Job Modal */}
       {showPostModal && (

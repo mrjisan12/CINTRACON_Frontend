@@ -419,74 +419,80 @@ const NoteSharing = () => {
           {/* Main Content */}
           <main className="flex-1">
             
-            {/* Header Section */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-white mb-2">Study Materials</h1>
-              <p className="text-gray-400 mb-6">
-                Discover and share academic resources
-              </p>
+            {/* Header Section with Upload Button on Right */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+              {/* Page Title on Left */}
+              <div className="mb-4 lg:mb-0">
+                <h1 className="text-3xl font-bold text-white">Study Materials</h1>
+                <p className="text-gray-400">
+                  Discover and share academic resources
+                </p>
+              </div>
 
-              {/* Upload Button */}
+              {/* Upload Button - Smaller on Right */}
               <button
                 onClick={() => setShowUploadModal(true)}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg shadow-purple-500/25 border border-purple-500/30"
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg shadow-purple-500/25 border border-purple-500/30 flex items-center gap-2 text-sm"
               >
-                Upload New Note
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Upload Note
               </button>
             </div>
 
-            {/* Filters Section */}
-            <div className="bg-[#1E2130] rounded-2xl p-6 border border-[#2A2D3A] mb-6">
-              <div className="flex flex-col lg:flex-row gap-4 items-center">
+            {/* Slim Filters Section */}
+            <div className="bg-[#1E2130] rounded-xl p-4 border border-[#2A2D3A] mb-6">
+              <div className="flex flex-col lg:flex-row gap-3 items-center">
                 
-                {/* Search Bar */}
-                <div className="flex-1">
+                {/* Search Bar - Slim */}
+                <div className="flex-1 w-full">
                   <input
                     type="text"
-                    placeholder="Search notes by title or description..."
+                    placeholder="Search notes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                    className="w-full bg-[#1E2130] border border-[#2A2D3A] rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all text-sm"
                   />
                 </div>
 
-                {/* Department Filter */}
+                {/* Department Filter - Slim */}
                 <select
                   value={selectedDepartment}
                   onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                  className="w-full lg:w-32 bg-[#1E2130] border border-[#2A2D3A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all text-sm"
                 >
                   {departments.map(dept => (
                     <option key={dept} value={dept}>
-                      {dept === 'All' ? 'All Departments' : dept}
+                      {dept === 'All' ? 'All Depts' : dept}
                     </option>
                   ))}
                 </select>
 
-                {/* Semester Filter */}
+                {/* Semester Filter - Slim */}
                 <select
                   value={selectedSemester}
                   onChange={(e) => setSelectedSemester(e.target.value)}
-                  className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                  className="w-full lg:w-32 bg-[#1E2130] border border-[#2A2D3A] rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all text-sm"
                 >
                   {semesters.map(sem => (
                     <option key={sem} value={sem}>
-                      {sem === 'All' ? 'All Semesters' : `Sem ${sem}`}
+                      {sem === 'All' ? 'All Sem' : `Sem ${sem}`}
                     </option>
                   ))}
                 </select>
 
-                {/* Reset Button */}
+                {/* Reset Button - Slim */}
                 <button
                   onClick={clearFilters}
-                  className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-500 hover:to-gray-600 transition-all duration-200 border border-gray-500/30 shadow-lg"
+                  className="w-full lg:w-auto px-3 py-2 bg-[#2A2D3A] text-white rounded-lg hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A] text-sm font-medium"
                 >
                   Reset
                 </button>
               </div>
             </div>
 
-            {/* Notes Grid with SIMPLIFIED Card Design */}
+            {/* Notes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredNotes.map((note) => {
                 const borderColor = semesterColors[note.semester];

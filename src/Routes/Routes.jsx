@@ -5,6 +5,7 @@ import NotFound from "../pages/NotFound";
 import Landing from "../Pages/Client/Landing";
 import Login from "../Pages/Client/Authentication/Login";
 import Signup from "../Pages/Client/Authentication/Signup";
+import AdminSignUp from "../Pages/Client/Authentication/AdminSignUp";
 import HomePage from "../Pages/Client/Home/HomePage";
 import AllStudentsPage from "../Pages/Client/AllStudents/AllStudentsPage";
 import Profile from "../Pages/Client/Profile/Profile";
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
+      { path: "/admin-signup", element: <AdminSignUp /> }, 
       { path: "/forget-password", element: <ForgetPassword /> },
       { path: "/otp", element: <OTP /> },
       { path: "/confirm-pass", element: <ConfirmPass /> },
