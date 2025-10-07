@@ -1,6 +1,8 @@
 // Pages/Client/Authentication/Login.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { login } from "../../../api/authApi";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,14 +15,33 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate login process
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log("Login attempt:", { email, password, remember });
-    alert("Logged in successfully!");
-    setIsLoading(false);
-    navigate("/home");
+
+    try {
+      const response = await login({ email, password });
+      const { msg, success, data } = response.data;
+
+      if (success) {
+        // Show success toast
+        toast.success(msg);
+
+        // Save accessToken to localStorage
+        localStorage.setItem("accessToken", data.accessToken);
+
+        // Navigate to /home
+        navigate("/home");
+      } else {
+        // Show error toast
+        toast.error("Login failed. Please try again.");
+      }
+    } catch (error) {
+      // Handle API errors
+      toast.error(
+        error.response?.data?.data?.non_field_errors?.join(", ") ||
+        "An error occurred. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,9 +131,8 @@ const Login = () => {
               <span className="text-sm text-slate-300">Remember me</span>
             </label>
 
-            {/* ✅ FORGET PASSWORD LINK - FIXED */}
-            <Link 
-              to="/forget-password" 
+            <Link
+              to="/send-otp"
               className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline transition-colors duration-200"
             >
               Forgot Password?

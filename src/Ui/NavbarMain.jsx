@@ -2,6 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaBars, FaBell } from 'react-icons/fa';
+import { logout } from '../api/authApi';
+import { getNavbarInfo } from '../api/homeApi';
+import { toast } from 'react-toastify';
+import { useEffect } from 'react';
+
 
 const user = {
   name: 'Miznur Rahman Jisan',
@@ -18,6 +23,7 @@ const NavbarMain = () => {
   const dropdownRef = React.useRef(null);
   const notificationRef = React.useRef(null);
   const mobileMenuRef = React.useRef(null);
+  const [navbarInfo, setNavbarInfo] = React.useState(null);
 
   // Example user data for demo (replace with real data or API)
   const users = [
@@ -55,6 +61,50 @@ const NavbarMain = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdown, notificationOpen, mobileMenu]);
+
+
+  // Navbar info 
+    // Fetch Navbar Info
+  useEffect(() => {
+    const fetchNavbarInfo = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          const response = await getNavbarInfo(token);
+          const { success, data } = response.data;
+          if (success) {
+            setNavbarInfo(data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch navbar info:", error);
+      }
+    };
+
+    fetchNavbarInfo();
+  }, []);
+
+
+
+
+
+  // Logout function  
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      // console.log("Logging out with token:", token);
+      if (token) {
+        await logout(token); // Call logout API
+        localStorage.removeItem("accessToken"); 
+        toast.success("Logged out successfully");
+        navigate("/"); // Redirect to home
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+
 
   return (
   <nav className="sticky top-0 z-30 bg-[#181820] shadow flex items-center justify-between px-3 sm:px-6 md:px-12 h-16 border-b border-[#232A36] ">
@@ -176,13 +226,13 @@ const NavbarMain = () => {
       <div className="hidden md:flex items-center gap-6 min-w-[220px] justify-end relative">
         <div className="flex items-center gap-3 bg-[#1E2939] px-3 py-1.5 rounded-full">
           <img src="/diamond.png" alt="Diamond" className="h-6 w-6 object-contain" />
-          <span className="text-white font-semibold text-lg">925</span>
+          <span className="text-white font-semibold text-lg">{navbarInfo?.points ?? 0}</span>
           
         </div>
         <div className="flex items-center gap-2 cursor-pointer relative" ref={dropdownRef}>
-          <span className="text-white font-medium order-1 md:order-none">{user.name}</span>
+          <span className="text-white font-medium order-1 md:order-none">{navbarInfo?.full_name ?? 'N/A'}</span>
           <img
-            src={user.avatar}
+            src={navbarInfo?.profile_photo ?? 'jisan.jpg'}
             alt="User Avatar"
             className="h-10 w-10 rounded-full border-2 border-blue-500 object-cover order-2 md:order-none"
             onClick={() => setDropdown((d) => !d)}
@@ -191,7 +241,12 @@ const NavbarMain = () => {
           {dropdown && (
             <div className="absolute right-0 top-14 w-40 bg-[#232A36] rounded-lg shadow-lg py-2 z-50 border border-[#181D27] animate-fade-in">
               <button className="w-full text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]">Settings</button>
-              <Link to="/" className="w-full block text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]">Logout</Link>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]"
+              >
+                Logout
+              </button>
             </div>
           )}
         </div>
@@ -206,16 +261,16 @@ const NavbarMain = () => {
           <div ref={mobileMenuRef} className="absolute right-3 top-16 w-56 bg-[#232A36] rounded-lg shadow-lg py-3 z-50 border border-[#181D27] animate-fade-in flex flex-col gap-2">
             <div className="flex items-center gap-3 px-4 py-2 bg-[#181D27] rounded-full">
               <img src="/diamond.png" alt="Diamond" className="h-6 w-6 object-contain" />
-              <span className="text-white font-semibold text-lg">925</span>
+              <span className="text-white font-semibold text-lg">{navbarInfo?.points ?? 0}</span>
               <button className="relative ml-2 p-1 rounded-full hover:bg-[#232A36] focus:outline-none">
                 <FaBell className="text-gray-300 text-xl" />
                 <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 border-2 border-[#181D27]" />
               </button>
             </div>
             <div className="flex items-center gap-2 px-4 py-2">
-              <span className="text-white font-medium">{user.name}</span>
+              <span className="text-white font-medium">{navbarInfo?.full_name ?? 'N/A'}</span>
               <img
-                src={user.avatar}
+                src={navbarInfo?.profile_photo ?? 'jisan.jpg'}
                 alt="User Avatar"
                 className="h-10 w-10 rounded-full border-2 border-blue-500 object-cover"
               />

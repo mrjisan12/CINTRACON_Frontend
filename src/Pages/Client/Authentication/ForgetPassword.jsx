@@ -1,6 +1,8 @@
 // Pages/Client/Authentication/ForgetPassword.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { sendOtp } from "../../../api/authApi";
 
 const ForgetPassword = () => {
   const navigate = useNavigate();
@@ -9,31 +11,43 @@ const ForgetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Email validation
     if (!email) {
-      alert("Please enter your email address");
+      toast.error("Please enter your email address");
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      alert("Please enter a valid email address");
+      toast.error("Please enter a valid email address");
       return;
     }
 
     setIsLoading(true);
-    
-    // Simulate API call to send OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log("OTP sent to:", email);
-    setIsLoading(false);
-    
-    // ✅ FIXED: Use navigate with state instead of URL params
-    navigate("/otp", { state: { email: email } });
-    
-    // ✅ ALTERNATIVE: You can also use URL params like this:
-    // navigate(`/otp?email=${encodeURIComponent(email)}`);
+
+    try {
+      // Call sendOtp API
+      const response = await sendOtp({ email });
+      const { msg, success } = response.data;
+
+      if (success) {
+        // Show success toast
+        toast.success(msg);
+
+        // Navigate to /otp route with email state
+        navigate("/check-otp", { state: { email } });
+      } else {
+        // Show error toast
+        toast.error("Failed to send OTP. Please try again.");
+      }
+    } catch (error) {
+      // Handle API errors
+      toast.error(
+        error.response?.data?.msg || "An error occurred. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

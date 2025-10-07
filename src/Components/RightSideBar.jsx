@@ -1,85 +1,38 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-
-const topMembers = [
-  {
-    name: 'Miznur Rahman Jisan',
-    dept: 'CSE',
-    semester: '3.1',
-    score: 925,
-    avatar: 'jisan.jpg',
-  },
-  {
-    name: 'Shahid Al Mamin',
-    dept: 'CSE',
-    semester: '3.2',
-    score: 900,
-    avatar: 'mamim.jpg',
-  },
-  {
-    name: 'Nashrah Zakir Nawmi',
-    dept: 'CSE',
-    semester: '3.1',
-    score: 875,
-    avatar: 'nawmi.jpg',
-  },
-  {
-    name: 'Lamia Akter Jesmin',
-    dept: 'CSE',
-    semester: '2.2',
-    score: 850,
-    avatar: 'jesmin.jpeg',
-  },
-  {
-    name: 'Alif Mahmud Talha',
-    dept: 'CSE',
-    semester: '2.1',
-    score: 825,
-    avatar: 'alif.jpg',
-  },
-  {
-    name: 'Lubna Akter',
-    dept: 'CSE',
-    semester: '2.2',
-    score: 800,
-    avatar: 'lubna.jpg',
-  },
-  {
-    name: 'Nishat Anjum',
-    dept: 'CSE',
-    semester: '3.1',
-    score: 775,
-    avatar: 'nishat.jpg',
-  },
-  {
-    name: 'Hridita Ridi',
-    dept: 'CSE',
-    semester: '3.1',
-    score: 750,
-    avatar: 'ridi.jpg',
-  },
-  {
-    name: 'Sharmin Sultana Annie',
-    dept: 'CSE',
-    semester: '3.2',
-    score: 700,
-    avatar: 'anni.jpg',
-  },
-  {
-    name: 'Mark Zukerburg',
-    dept: 'CSE',
-    semester: 'Graduate',
-    score: 500,
-    avatar: 'https://randomuser.me/api/portraits/men/36.jpg',
-  },
-];
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { getRightSidebarInfo } from "../api/homeApi";
 
 const RightSideBar = () => {
+  const [topMembers, setTopMembers] = useState([]);
+
+  useEffect(() => {
+    const fetchTopMembers = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await getRightSidebarInfo(token);
+        if (res.data.success) {
+          const users = res.data.data.top_users.map((user) => ({
+            name: user.full_name,
+            dept: user.department.toUpperCase(),
+            semester: user.semester,
+            score: user.total_points,
+            avatar: user.profile_photo,
+          }));
+          setTopMembers(users);
+        }
+      } catch (err) {
+        console.error("Failed to fetch top users:", err);
+      }
+    };
+
+    fetchTopMembers();
+  }, []);
+
   return (
     <aside
       className="bg-[#20222B] rounded-2xl shadow-lg p-4 mb-6 flex flex-col gap-8 sticky top-20
       min-h-[500px] w-full max-w-[340px] mx-auto overflow-y-auto scrollbar-thin scrollbar-thumb-[#3DDC97]/40 scrollbar-track-transparent hide-scrollbar"
-      style={{ maxHeight: 'calc(100vh - 100px)' }}
+      style={{ maxHeight: "calc(100vh - 100px)" }}
     >
       {/* Active Stat */}
       <div className="bg-[#23242C] rounded-xl px-4 py-4 mb-2 flex flex-col items-center">

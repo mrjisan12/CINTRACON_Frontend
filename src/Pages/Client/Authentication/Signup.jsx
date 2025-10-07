@@ -1,6 +1,9 @@
 // Pages/Client/Authentication/Signup.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { signup } from "../../../api/authApi";
+import { toast } from "react-toastify";
+
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -14,40 +17,84 @@ const Signup = () => {
     email: "",
     department: "",
     semester: "",
+    section: "",
     batch: "",
     password: "",
     confirmPassword: "",
-    profilePhoto: null
+    profilePhoto: null, // optional (not sent in JSON request)
   });
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: files ? files[0] : value
+      [name]: files ? files[0] : value,
     }));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!agree) {
-      alert("Please accept the Terms and Conditions to continue.");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-    
-    setIsLoading(true);
-    // Simulate signup process
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log("Signup data:", formData);
-    alert("Signed up successfully!");
-    setIsLoading(false);
-    navigate("/home");
+  e.preventDefault();
+  if (!agree) {
+    alert("Please accept the Terms and Conditions to continue.");
+    return;
+  }
+  if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match!");
+    return;
+  }
+
+  // Common payload keys (when we send JSON)
+  const jsonPayload = {
+    full_name: formData.fullName,
+    email: formData.email,
+    department: formData.department,
+    semester: formData.semester,
+    section: formData.section, // UI has no field; send empty or add a field if needed
+    batch_no: formData.batch,
+    password: formData.password,
+    confirm_password: formData.confirmPassword,
   };
+
+  // Decide JSON vs FormData depending on whether a file was chosen
+  let toSend = jsonPayload;
+
+  if (formData.profilePhoto) {
+    const fd = new FormData();
+    fd.append("full_name", formData.fullName);
+    fd.append("email", formData.email);
+    fd.append("department", formData.department);
+    fd.append("semester", formData.semester);
+    fd.append("section", formData.section); // adjust if/when you add a field
+    fd.append("batch_no", formData.batch);
+    fd.append("password", formData.password);
+    fd.append("confirm_password", formData.confirmPassword);
+    fd.append("profile_photo", formData.profilePhoto); // <-- the file
+    toSend = fd;
+  }
+
+  try {
+    setIsLoading(true);
+    const response = await signup(toSend);
+    const { msg, success /*, data */ } = response?.data ?? {};
+
+    if (success) {
+      toast.success(msg || "Signed up successfully!");
+      navigate("/login");
+    } else {
+      toast.error(msg || "Signup failed. Please try again.");
+    }
+  } catch (err) {
+    const apiMsg =
+      err?.response?.data?.msg ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Signup failed. Please try again.";
+    toast.error(apiMsg);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // Terms and Conditions Content
   const TermsAndConditions = () => (
@@ -179,7 +226,7 @@ const Signup = () => {
         className="absolute -bottom-10 -right-10 md:-bottom-20 md:-right-20 w-40 h-40 md:w-64 md:h-64 rounded-full bg-blue-500 opacity-10 blur-3xl animate-pulse"
         style={{ animationDelay: "2s" }}
       ></div>
-      <div 
+      <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 md:w-80 md:h-80 rounded-full bg-purple-500 opacity-5 blur-3xl animate-pulse"
         style={{ animationDelay: "1s" }}
       ></div>
@@ -198,7 +245,7 @@ const Signup = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${10 + Math.random() * 10}s`
+                animationDuration: `${10 + Math.random() * 10}s`,
               }}
             />
           ))}
@@ -208,21 +255,15 @@ const Signup = () => {
           {/* Logo Container */}
           <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 p-1 shadow-lg">
             <div className="w-full h-full rounded-full bg-[#1E293B] flex items-center justify-center">
-              <img
-                src="/logo.png"
-                alt="App Logo"
-                className="h-6 w-6 object-contain"
-              />
+              <img src="/logo.png" alt="App Logo" className="h-6 w-6 object-contain" />
             </div>
           </div>
-          
+
           {/* Header Text */}
           <h1 className="text-xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
             Create Account
           </h1>
-          <p className="text-gray-400 text-xs">
-            Join our community and start your journey
-          </p>
+          <p className="text-gray-400 text-xs">Join our community and start your journey</p>
         </div>
 
         {/* Compact Form */}
@@ -230,9 +271,7 @@ const Signup = () => {
           {/* Full Name & Email Row */}
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Full Name
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Full Name</label>
               <input
                 type="text"
                 name="fullName"
@@ -245,9 +284,7 @@ const Signup = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Email
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
@@ -263,9 +300,7 @@ const Signup = () => {
           {/* Department & Semester Row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Department
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Department</label>
               <select
                 name="department"
                 required
@@ -273,18 +308,41 @@ const Signup = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300 appearance-none"
               >
-                <option value="" className="bg-slate-800">Department</option>
-                <option value="Computer Science" className="bg-slate-800">CSE</option>
-                <option value="EEE" className="bg-slate-800">EEE</option>
-                <option value="Business" className="bg-slate-800">Business</option>
-                <option value="Mathematics" className="bg-slate-800">Mathematics</option>
+                <option value="" className="bg-slate-800">
+                  Department
+                </option>
+                <option value="cse" className="bg-slate-800">
+                  CSE
+                </option>
+                <option value="eee" className="bg-slate-800">
+                  EEE
+                </option>
+                <option value="civil" className="bg-slate-800">
+                  Civil
+                </option>
+                <option value="eng" className="bg-slate-800">
+                  English
+                </option>
+                <option value="bba" className="bg-slate-800">
+                  BBA
+                </option>
+                <option value="pharm" className="bg-slate-800">
+                  Pharm
+                </option>
+                <option value="llb" className="bg-slate-800">
+                  Law
+                </option>
+                <option value="msc" className="bg-slate-800">
+                  M.Sc
+                </option>
+                <option value="mba" className="bg-slate-800">
+                  MBA
+                </option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Semester
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Semester</label>
               <select
                 name="semester"
                 required
@@ -292,36 +350,57 @@ const Signup = () => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300 appearance-none"
               >
-                <option value="" className="bg-slate-800">Semester</option>
-                {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                  <option key={sem} value={sem} className="bg-slate-800">Sem {sem}</option>
+                <option value="" className="bg-slate-800">
+                  Semester
+                </option>
+                {['1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2', 'Graduate'].map((sem) => (
+                  <option key={sem} value={sem} className="bg-slate-800">
+                    {sem}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
           {/* Batch */}
-          <div>
-            <label className="block text-xs text-gray-300 mb-1">
-              Batch No
-            </label>
-            <input
-              type="text"
-              name="batch"
-              required
-              value={formData.batch}
-              onChange={handleInputChange}
-              placeholder="Batch number"
-              className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Section</label>
+              <select
+                name="section"
+                required
+                value={formData.section}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300 appearance-none"
+              >
+                <option value="" className="bg-slate-800">
+                  Section
+                </option>
+                {['A', 'B', 'C', 'D', 'E'].map((section) => (
+                  <option key={section} value={section} className="bg-slate-800">
+                    {section}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Batch No</label>
+              <input
+                type="text"
+                name="batch"
+                required
+                value={formData.batch}
+                onChange={handleInputChange}
+                placeholder="Batch number"
+                className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300"
+              />
+            </div>
           </div>
 
           {/* Password & Confirm Password Row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Password
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -343,9 +422,7 @@ const Signup = () => {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-300 mb-1">
-                Confirm Password
-              </label>
+              <label className="block text-xs text-gray-300 mb-1">Confirm Password</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -367,11 +444,9 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* Profile Photo */}
+          {/* Profile Photo (optional; not sent in JSON) */}
           <div>
-            <label className="block text-xs text-gray-300 mb-1">
-              Profile Photo (Optional)
-            </label>
+            <label className="block text-xs text-gray-300 mb-1">Profile Photo (Optional)</label>
             <input
               type="file"
               name="profilePhoto"
@@ -392,7 +467,7 @@ const Signup = () => {
               />
               <span className="text-xs text-slate-300">
                 I accept the{" "}
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowTerms(true)}
                   className="text-cyan-400 hover:text-cyan-300 hover:underline focus:outline-none"
@@ -412,7 +487,7 @@ const Signup = () => {
             } relative overflow-hidden group mt-2`}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            
+
             <span className="relative z-10 text-sm">
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -430,10 +505,7 @@ const Signup = () => {
         <div className="mt-4 pt-3 border-t border-gray-700/50 text-center text-xs text-gray-400">
           <div className="mb-2">
             Already have an account?{" "}
-            <Link 
-              to="/login" 
-              className="text-cyan-400 hover:text-cyan-300 transition-colors duration-200"
-            >
+            <Link to="/login" className="text-cyan-400 hover:text-cyan-300 transition-colors duration-200">
               Login Here
             </Link>
           </div>

@@ -1,8 +1,9 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import Footer from "../Ui/Footer";
-import Navbar from "../Ui/Navbar";
 import ScrollToTop from "../Ui/ScrollToTop";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 export default function Client() {
   const location = useLocation();
@@ -36,6 +37,19 @@ export default function Client() {
       <main className="flex-1">
         <Outlet />
       </main>
+
+       {/* 🔥 Toast Container এখানে বসাও */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="colored"
+      />
+
+
     </div>
   );
 }
