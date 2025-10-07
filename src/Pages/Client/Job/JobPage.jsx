@@ -12,8 +12,10 @@ const JobPage = () => {
     location: '',
     type: '',
     deadline: '',
-    duration: ''
+    duration: '',
+    image: null
   })
+  const [imagePreview, setImagePreview] = useState(null)
 
   const jobs = [
     {
@@ -134,14 +136,52 @@ const JobPage = () => {
     }))
   }
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }))
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      image: null
+    }))
+    setImagePreview(null)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    if (!formData.image) {
+      alert('Please upload a job image!')
+      return
+    }
+    
     setIsSubmitting(true)
     
-    // Simulate API call
+    // Simulate API call with image upload
     try {
+      // In real app, you would upload the image to a server here
+      // For demo, we'll just simulate the upload
       await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Job posted:', formData)
+      
+      console.log('Job posted with image:', {
+        ...formData,
+        image: formData.image.name // In real app, this would be the uploaded image URL
+      })
+      
       setShowPostModal(false)
       setFormData({
         title: '',
@@ -150,8 +190,10 @@ const JobPage = () => {
         location: '',
         type: '',
         deadline: '',
-        duration: ''
+        duration: '',
+        image: null
       })
+      setImagePreview(null)
       alert('Job posted successfully!')
     } catch (error) {
       console.error('Error posting job:', error)
@@ -299,7 +341,7 @@ const JobPage = () => {
       {/* Post Job Modal */}
       {showPostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-blue-500/50 shadow-2xl shadow-blue-500/30 max-h-[90vh] overflow-hidden">
+          <div className="relative w-full max-w-2xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-blue-500/50 shadow-2xl shadow-blue-500/30">
             
             {/* Modal Header */}
             <div className="relative p-6 border-b border-blue-500/30">
@@ -308,7 +350,20 @@ const JobPage = () => {
                   💼 Post New Job
                 </h2>
                 <button
-                  onClick={() => setShowPostModal(false)}
+                  onClick={() => {
+                    setShowPostModal(false)
+                    setFormData({
+                      title: '',
+                      company: '',
+                      salary: '',
+                      location: '',
+                      type: '',
+                      deadline: '',
+                      duration: '',
+                      image: null
+                    })
+                    setImagePreview(null)
+                  }}
                   className="w-8 h-8 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-colors duration-200 border border-red-500/30"
                 >
                   ✕
@@ -318,7 +373,7 @@ const JobPage = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 max-h-[60vh] overflow-y-auto">
+            <div className="p-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 
                 {/* Job Title & Company */}
@@ -412,18 +467,70 @@ const JobPage = () => {
                   </div>
                 </div>
 
-                {/* Duration */}
-                <div>
-                  <label className="block text-white font-semibold mb-2">⏰ Working Hours *</label>
-                  <input
-                    type="text"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="e.g., 9:00 AM - 6:00 PM, Flexible Hours"
-                    className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
-                  />
+                {/* Duration & Image Upload - Side by Side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Working Hours */}
+                  <div>
+                    <label className="block text-white font-semibold mb-2">⏰ Working Hours *</label>
+                    <input
+                      type="text"
+                      name="duration"
+                      value={formData.duration}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., 9:00 AM - 6:00 PM"
+                      className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all"
+                    />
+                  </div>
+
+                  {/* Image Upload - Same style as other fields */}
+                  <div>
+                    <label className="block text-white font-semibold mb-2">🖼️ Job Image *</label>
+                    
+                    {!imagePreview ? (
+                      <div className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                          id="image-upload"
+                        />
+                        <label
+                          htmlFor="image-upload"
+                          className="cursor-pointer flex items-center gap-3 text-gray-400"
+                        >
+                          <span className="text-lg">📁</span>
+                          <span>Click to upload job image</span>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="w-full bg-[#1E2130] border-2 border-blue-500 rounded-xl px-4 py-3 text-white">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="w-10 h-10 rounded-lg object-cover border border-blue-500/30"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">
+                              {formData.image.name}
+                            </p>
+                            <p className="text-gray-400 text-xs">
+                              {(formData.image.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="w-8 h-8 bg-red-500/20 text-red-400 rounded-lg flex items-center justify-center hover:bg-red-500/30 transition-colors duration-200 border border-red-500/30 text-sm"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </form>
             </div>
@@ -431,7 +538,20 @@ const JobPage = () => {
             {/* Modal Footer */}
             <div className="p-6 border-t border-blue-500/30 flex justify-end gap-3">
               <button
-                onClick={() => setShowPostModal(false)}
+                onClick={() => {
+                  setShowPostModal(false)
+                  setFormData({
+                    title: '',
+                    company: '',
+                    salary: '',
+                    location: '',
+                    type: '',
+                    deadline: '',
+                    duration: '',
+                    image: null
+                  })
+                  setImagePreview(null)
+                }}
                 className="px-6 py-2 bg-gray-600 text-white font-medium rounded-xl hover:bg-gray-700 transition-all duration-200 border border-gray-500/30"
               >
                 Cancel
@@ -439,7 +559,7 @@ const JobPage = () => {
               
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !formData.image}
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-xl hover:from-blue-500 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center gap-2 border border-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
