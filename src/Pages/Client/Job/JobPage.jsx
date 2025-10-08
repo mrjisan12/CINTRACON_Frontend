@@ -360,20 +360,20 @@ const JobPage = () => {
       {/* Image Preview Modal */}
       {showImageModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all duration-300"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-green/90 backdrop-blur-md transition-all duration-300"
           onClick={() => setShowImageModal(false)}
         >
           <div 
             className="relative max-w-4xl max-h-[90vh] w-full flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
+            {/* Close Button
             <button
               onClick={() => setShowImageModal(false)}
               className="absolute -top-12 right-0 z-10 w-10 h-10 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-all duration-200 border border-red-500/30 hover:scale-110"
             >
               ✕
-            </button>
+            </button> */}
             
             {/* Image Container */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-blue-500/20 border-2 border-blue-500/30 bg-black">
@@ -390,7 +390,7 @@ const JobPage = () => {
             </div>
 
             {/* Navigation Arrows (if you have multiple images) */}
-            <button 
+            {/* <button 
               className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 hover:scale-110"
               onClick={() => {
                 // Add navigation logic here if needed
@@ -399,9 +399,9 @@ const JobPage = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </button>
+            </button> */}
             
-            <button 
+            {/* <button 
               className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 hover:scale-110"
               onClick={() => {
                 // Add navigation logic here if needed
@@ -410,7 +410,7 @@ const JobPage = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </button>
+            </button> */}
           </div>
         </div>
       )}

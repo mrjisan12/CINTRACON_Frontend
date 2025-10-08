@@ -396,7 +396,7 @@ const EventsPage = () => {
       {/* Image Preview Modal */}
       {showImageModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md transition-all duration-300"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-green/90 backdrop-blur-md transition-all duration-300"
           onClick={() => setShowImageModal(false)}
         >
           <div 
@@ -404,12 +404,12 @@ const EventsPage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
-            <button
+            {/* <button
               onClick={() => setShowImageModal(false)}
               className="absolute -top-12 right-0 z-10 w-10 h-10 flex items-center justify-center bg-red-500/30 text-red-400 rounded-full hover:bg-red-500/50 transition-all duration-200 border border-red-500/30 hover:scale-110"
             >
               ✕
-            </button>
+            </button> */}
             
             {/* Image Container */}
             <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-green-500/20 border-2 border-green-500/30 bg-black">
@@ -426,7 +426,7 @@ const EventsPage = () => {
             </div>
 
             {/* Navigation Arrows (if you have multiple images) */}
-            <button 
+            {/* <button 
               className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 hover:scale-110"
               onClick={() => {
                 // Add navigation logic here if needed
@@ -446,7 +446,7 @@ const EventsPage = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </button>
+            </button> */}
           </div>
         </div>
       )}
