@@ -1,29 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import NavbarMain from '../../../Ui/NavbarMain';
 import UserPosts from './UserPosts';
 import IntroSidebar from './IntroSidebar';
 import PlanningSidebar from './PlanningSidebar';
 import ProfileHeader from './ProfileHeader';
-import { getProfileInfo } from '../../../api/profileApi';
+import { getProfileById } from '../../../api/profileApi';
 
-const Profile = () => {
+const UserProfileById = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { userId } = useParams();
 
-  // Fetch profile data
+  // Fetch profile data by ID
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const token = localStorage.getItem("accessToken");
         if (token) {
-          const response = await getProfileInfo(token, { page: 1, size: 10 });
+          const response = await getProfileById(token, userId, { page: 1, size: 10 });
           if (response.data.success) {
             setProfileData(response.data.data);
           } else {
             setError("Failed to fetch profile data");
           }
+        } else {
+          setError("Please login to view profile");
         }
       } catch (err) {
         setError("Error fetching profile data");
@@ -33,8 +38,10 @@ const Profile = () => {
       }
     };
 
-    fetchProfileData();
-  }, []);
+    if (userId) {
+      fetchProfileData();
+    }
+  }, [userId]);
 
   if (loading) {
     return (
@@ -53,6 +60,17 @@ const Profile = () => {
         <NavbarMain />
         <div className="flex justify-center items-center h-64">
           <div className="text-red-400 text-lg">{error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="min-h-screen bg-[#181820]">
+        <NavbarMain />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-red-400 text-lg">Profile not found</div>
         </div>
       </div>
     );
@@ -80,4 +98,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default UserProfileById;

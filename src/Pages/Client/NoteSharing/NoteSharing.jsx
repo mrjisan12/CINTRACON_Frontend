@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LeftSideBar from '../../../Components/LeftSideBar';
 import NavbarMain from '../../../Ui/NavbarMain';
+import { getAllNotes, getNoteDetail, createNote, increaseDownloadCount } from '../../../api/noteSharingApi';
+import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 const NoteSharing = () => {
   const navigate = useNavigate();
@@ -10,6 +13,10 @@ const NoteSharing = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [expandedNote, setExpandedNote] = useState(null);
+  const [notesData, setNotesData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Semester colors matching your theme
   const semesterColors = {
@@ -24,75 +31,66 @@ const NoteSharing = () => {
     'Others': '#10B981'
   };
 
-  // Sample notes data
-  const notesData = [
-    { 
-      id: 1, 
-      title: "Data Structures and Algorithms Complete Guide", 
-      semester: "3.1", 
-      department: "CSE", 
-      uploader: "John Doe", 
-      date: "2024-01-15", 
-      downloads: 145, 
-      type: "pdf",
-      description: "Complete guide to data structures including arrays, linked lists, trees, and graphs with implementation examples.",
-    },
-    { 
-      id: 2, 
-      title: "Calculus and Mathematical Foundations", 
-      semester: "1.1", 
-      department: "CSE", 
-      uploader: "Jane Smith", 
-      date: "2024-01-12", 
-      downloads: 89, 
-      type: "pdf",
-      description: "Fundamental calculus concepts with solved examples and practice problems.",
-    },
-    { 
-      id: 3, 
-      title: "Object Oriented Programming Principles", 
-      semester: "2.1", 
-      department: "CSE", 
-      uploader: "Mike Johnson", 
-      date: "2024-01-10", 
-      downloads: 167, 
-      type: "pdf",
-      description: "Comprehensive OOP concepts with Java and C++ implementation examples.",
-    },
-    { 
-      id: 4, 
-      title: "Database Management Systems", 
-      semester: "3.1", 
-      department: "CSE", 
-      uploader: "Sarah Wilson", 
-      date: "2024-01-08", 
-      downloads: 203, 
-      type: "pdf",
-      description: "SQL, normalization, and database design principles with real-world examples.",
-    },
-    { 
-      id: 5, 
-      title: "Computer Networks Fundamentals", 
-      semester: "4.1", 
-      department: "CSE", 
-      uploader: "Alex Brown", 
-      date: "2024-01-05", 
-      downloads: 98, 
-      type: "pdf",
-      description: "OSI model, TCP/IP protocols, and network security fundamentals.",
-    },
-    { 
-      id: 6, 
-      title: "Machine Learning Basics", 
-      semester: "4.2", 
-      department: "CSE", 
-      uploader: "David Lee", 
-      date: "2024-01-03", 
-      downloads: 234, 
-      type: "pdf",
-      description: "Introduction to ML algorithms, neural networks, and practical implementations.",
+  // Fetch notes from API
+  const fetchNotes = async (page = 1, size = 10) => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('accessToken');
+      
+      const filters = {};
+      if (selectedDepartment !== 'All') filters.department = selectedDepartment.toLowerCase();
+      if (selectedSemester !== 'All') filters.semester = selectedSemester;
+      if (searchTerm) filters.search = searchTerm;
+
+      const response = await getAllNotes(page, size, filters, token);
+      
+      if (response.success) {
+        if (page === 1) {
+          setNotesData(response.data);
+        } else {
+          setNotesData(prev => [...prev, ...response.data]);
+        }
+        setHasMore(response.data.length === size);
+        setCurrentPage(page);
+      } else {
+        toast.error('Failed to fetch notes');
+      }
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      toast.error('Error fetching notes');
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  // Fetch note details
+  const fetchNoteDetail = async (noteId) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await getNoteDetail(noteId, token);
+      
+      if (response.success) {
+        setExpandedNote(response.data);
+      } else {
+        toast.error('Failed to fetch note details');
+      }
+    } catch (error) {
+      console.error('Error fetching note details:', error);
+      toast.error('Error fetching note details');
+    }
+  };
+
+  // Load more notes
+  const loadMoreNotes = () => {
+    if (hasMore && !isLoading) {
+      fetchNotes(currentPage + 1, 10);
+    }
+  };
+
+  // Initial fetch and when filters change
+  useEffect(() => {
+    fetchNotes(1, 10);
+  }, [searchTerm, selectedSemester, selectedDepartment]);
 
   // Upload Modal Component
   const UploadModal = () => {
@@ -101,8 +99,11 @@ const NoteSharing = () => {
       semester: '',
       department: '',
       description: '',
-      file: null
+      section: '',
+      drive_link: '',
+      note_file: null
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleInputChange = (e) => {
       const { name, value } = e.target;
@@ -117,23 +118,83 @@ const NoteSharing = () => {
       if (file) {
         setFormData(prev => ({
           ...prev,
-          file: file
+          note_file: file
         }));
       }
     };
 
+   
     const handleSubmit = async (e) => {
       e.preventDefault();
-      console.log('Uploading note:', formData);
-      setShowUploadModal(false);
-      setFormData({
-        title: '',
-        semester: '',
-        department: '',
-        description: '',
-        file: null
-      });
+      
+      if (!formData.note_file && !formData.drive_link) {
+        toast.error('Please upload a file or provide a drive link');
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+        const token = localStorage.getItem('accessToken');
+        
+        const submitData = new FormData();
+        submitData.append('title', formData.title);
+        submitData.append('semester', formData.semester);
+        submitData.append('department', formData.department.toLowerCase());
+        submitData.append('section', formData.section);
+        submitData.append('description', formData.description);
+        submitData.append('drive_link', formData.drive_link);
+        if (formData.note_file) {
+          submitData.append('note_file', formData.note_file);
+        }
+
+        // Debug: FormData content দেখুন
+        console.log('FormData content:');
+        for (let [key, value] of submitData.entries()) {
+          console.log(key, value);
+        }
+
+        const response = await createNote(submitData, token);
+        
+        if (response.success) {
+          toast.success('Note uploaded successfully!');
+          setShowUploadModal(false);
+          setFormData({
+            title: '',
+            semester: '',
+            department: '',
+            description: '',
+            section: '',
+            drive_link: '',
+            note_file: null
+          });
+          fetchNotes(1, 10);
+        } else {
+          console.log('Upload failed response:', response);
+          toast.error(response.msg || 'Failed to upload note');
+        }
+      } catch (error) {
+        console.error('Full error object:', error);
+        console.error('Error response data:', error.response?.data);
+        
+        // Specific validation errors দেখুন
+        if (error.response?.data?.data) {
+          const validationErrors = error.response.data.data;
+          console.log('Validation errors:', validationErrors);
+          
+          let errorMessage = 'Validation errors: ';
+          Object.keys(validationErrors).forEach(key => {
+            errorMessage += `${key}: ${validationErrors[key]}. `;
+          });
+          toast.error(errorMessage);
+        } else {
+          toast.error(error.response?.data?.msg || 'Error uploading note');
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
     };
+
+
 
     const handleClose = () => {
       setShowUploadModal(false);
@@ -142,7 +203,9 @@ const NoteSharing = () => {
         semester: '',
         department: '',
         description: '',
-        file: null
+        section: '',
+        drive_link: '',
+        note_file: null
       });
     };
 
@@ -173,7 +236,7 @@ const NoteSharing = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
                {/* Note Title */}
               <div>
-                <label className="block text-white font-semibold mb-2">Note Title</label>
+                <label className="block text-white font-semibold mb-2">Note Title *</label>
                 <input
                   type="text"
                   name="title"
@@ -188,7 +251,7 @@ const NoteSharing = () => {
               {/* Semester & Department */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-white font-semibold mb-2">Semester</label>
+                  <label className="block text-white font-semibold mb-2">Semester *</label>
                   <select
                     name="semester"
                     value={formData.semester}
@@ -209,7 +272,7 @@ const NoteSharing = () => {
                 </div>
 
                 <div>
-                  <label className="block text-white font-semibold mb-2">Department</label>
+                  <label className="block text-white font-semibold mb-2">Department *</label>
                   <select
                     name="department"
                     value={formData.department}
@@ -229,6 +292,19 @@ const NoteSharing = () => {
                 </div>
               </div>
 
+              {/* Section */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Section</label>
+                <input
+                  type="text"
+                  name="section"
+                  value={formData.section}
+                  onChange={handleInputChange}
+                  placeholder="e.g., A, B, C"
+                  className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                />
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-white font-semibold mb-2">Description</label>
@@ -242,6 +318,19 @@ const NoteSharing = () => {
                 />
               </div>
 
+              {/* Drive Link */}
+              <div>
+                <label className="block text-white font-semibold mb-2">Google Drive Link</label>
+                <input
+                  type="url"
+                  name="drive_link"
+                  value={formData.drive_link}
+                  onChange={handleInputChange}
+                  placeholder="https://drive.google.com/..."
+                  className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
+                />
+              </div>
+
               {/* File Upload */}
               <div>
                 <label className="block text-white font-semibold mb-2">Upload File</label>
@@ -249,9 +338,9 @@ const NoteSharing = () => {
                   type="file"
                   onChange={handleFileChange}
                   accept=".pdf,.doc,.docx,.txt"
-                  required
                   className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-purple-600 file:to-pink-600 file:text-white hover:file:from-purple-500 hover:file:to-pink-700"
                 />
+                <p className="text-gray-400 text-sm mt-1">Upload a file OR provide a Google Drive link</p>
               </div>
             </form>
           </div>
@@ -260,16 +349,25 @@ const NoteSharing = () => {
           <div className="p-6 border-t border-purple-500/30 flex justify-end gap-3">
             <button
               onClick={handleClose}
-              className="px-6 py-2 bg-[#2A2D3A] text-white font-medium rounded-xl hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A]"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-[#2A2D3A] text-white font-medium rounded-xl hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A] disabled:opacity-50"
             >
               Cancel
             </button>
             
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-purple-500/25 border border-purple-500/30"
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-purple-500/25 border border-purple-500/30 flex items-center gap-2 disabled:opacity-50"
             >
-              Upload Note
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                'Upload Note'
+              )}
             </button>
           </div>
         </div>
@@ -279,15 +377,65 @@ const NoteSharing = () => {
 
   // Note Detail Modal
   const NoteDetailModal = () => {
-    if (!expandedNote) return null;
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const handleCloseModal = () => {
       setExpandedNote(null);
     };
 
-    const handleDownload = () => {
-      console.log('Downloading:', expandedNote.title);
+    const handleDownload = async () => {
+      if (!expandedNote) return;
+
+      try {
+        setIsDownloading(true);
+        const token = localStorage.getItem('accessToken');
+        
+        // Increase download count
+        await increaseDownloadCount(expandedNote.id, token);
+        
+        // Download the file
+        const downloadUrl = expandedNote.note_file || expandedNote.drive_link;
+        if (downloadUrl) {
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.setAttribute('download', `${expandedNote.title}.pdf`);
+          link.setAttribute('target', '_blank');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+        
+        // Update local state to reflect new download count
+        setExpandedNote(prev => ({
+          ...prev,
+          total_downloads: prev.total_downloads + 1
+        }));
+        
+        // Update the note in the list
+        setNotesData(prev => prev.map(note => 
+          note.id === expandedNote.id 
+            ? { ...note, total_downloads: note.total_downloads + 1 }
+            : note
+        ));
+
+        toast.success('Download started!');
+      } catch (error) {
+        console.error('Error downloading note:', error);
+        toast.error('Error downloading note');
+      } finally {
+        setIsDownloading(false);
+      }
     };
+
+    const handleDriveLink = () => {
+      if (expandedNote?.drive_link) {
+        window.open(expandedNote.drive_link, '_blank');
+      }
+    };
+
+    if (!expandedNote) return null;
+
+    const borderColor = semesterColors[expandedNote.semester] || semesterColors['Others'];
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -298,14 +446,17 @@ const NoteSharing = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="px-3 py-1 text-white text-sm font-bold rounded-full border shadow-lg"
-                      style={{ 
-                        borderColor: semesterColors[expandedNote.semester]
-                      }}>
+                      style={{ borderColor: borderColor }}>
                   Sem {expandedNote.semester}
                 </span>
                 <span className="px-3 py-1 text-white text-sm font-bold rounded-full border border-gray-500 shadow-lg">
-                  {expandedNote.department}
+                  {expandedNote.department?.toUpperCase()}
                 </span>
+                {expandedNote.section && (
+                  <span className="px-3 py-1 text-white text-sm font-bold rounded-full border border-gray-500 shadow-lg">
+                    Section {expandedNote.section}
+                  </span>
+                )}
               </div>
               <button
                 onClick={handleCloseModal}
@@ -320,16 +471,21 @@ const NoteSharing = () => {
             </h2>
             
             <div className="flex items-center gap-4 mt-3 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-white text-xs font-bold">
-                    {expandedNote.uploader.charAt(0)}
-                  </span>
-                </div>
-                <span className="text-gray-300 font-semibold">{expandedNote.uploader}</span>
-              </div>
+              <Link 
+                to={`/user-profile/${expandedNote.user?.id}`}
+                className="flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity duration-200"
+              >
+                <img 
+                  src={expandedNote.user?.profile_photo || '/default-avatar.png'} 
+                  alt={expandedNote.user?.full_name}
+                  className="w-8 h-8 rounded-full border-2 border-purple-500 group-hover:border-purple-300 transition-all duration-200"
+                />
+                <span className="text-gray-300 font-semibold group-hover:text-purple-300 group-hover:underline transition-all duration-200">
+                  {expandedNote.user?.full_name}
+                </span>
+              </Link>
               <span className="text-gray-500">•</span>
-              <span className="text-gray-300">{new Date(expandedNote.date).toLocaleDateString()}</span>
+              <span className="text-gray-300">{new Date(expandedNote.uploaded_at).toLocaleDateString()}</span>
             </div>
           </div>
 
@@ -338,15 +494,15 @@ const NoteSharing = () => {
             <div className="mb-6">
               <h3 className="text-white font-semibold mb-2 text-lg">Description</h3>
               <p className="text-gray-300 leading-relaxed bg-gray-800/30 p-4 rounded-xl border border-gray-700/50">
-                {expandedNote.description}
+                {expandedNote.description || 'No description provided.'}
               </p>
             </div>
 
-            {/* Stats - Simplified */}
+            {/* Stats */}
             <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20 shadow-lg">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">
-                  {expandedNote.downloads} Downloads
+                  {expandedNote.total_downloads} Downloads
                 </div>
               </div>
             </div>
@@ -354,41 +510,48 @@ const NoteSharing = () => {
 
           {/* Footer */}
           <div className="p-6 border-t border-purple-500/30 flex justify-between items-center">
-            <button
-              onClick={handleDownload}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-green-500/25 border border-green-500/30"
-            >
-              Download Now
-            </button>
+            {expandedNote.note_file && (
+              <button
+                onClick={handleDownload}
+                disabled={isDownloading}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-green-500/25 border border-green-500/30 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDownloading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  'Download File'
+                )}
+              </button>
+            )}
             
-            <div className="text-gray-300 bg-gray-800/50 px-4 py-2 rounded-xl border border-gray-700/50">
-              {expandedNote.downloads} downloads
-            </div>
+            {expandedNote.drive_link && (
+              <button
+                onClick={handleDriveLink}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold rounded-xl hover:from-blue-400 hover:to-violet-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/25 border border-blue-500/30"
+              >
+                Open Drive Link
+              </button>
+            )}
           </div>
         </div>
       </div>
     );
   };
 
-  // Semester counts
-  const semesterCounts = useMemo(() => {
-    const counts = {};
-    notesData.forEach(note => {
-      counts[note.semester] = (counts[note.semester] || 0) + 1;
-    });
-    return counts;
-  }, []);
-
   // Filtered notes
   const filteredNotes = useMemo(() => {
     return notesData.filter(note => {
-      const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           note.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = searchTerm === '' || 
+        note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (note.description && note.description.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesSemester = selectedSemester === 'All' || note.semester === selectedSemester;
-      const matchesDepartment = selectedDepartment === 'All' || note.department === selectedDepartment;
+      const matchesDepartment = selectedDepartment === 'All' || note.department === selectedDepartment.toLowerCase();
       return matchesSearch && matchesSemester && matchesDepartment;
     });
-  }, [searchTerm, selectedSemester, selectedDepartment]);
+  }, [notesData, searchTerm, selectedSemester, selectedDepartment]);
 
   const semesters = ['All', '1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2'];
   const departments = ['All', 'CSE', 'EEE', 'BBA', 'Pharm', 'Civil', 'English', 'Law'];
@@ -397,6 +560,10 @@ const NoteSharing = () => {
     setSearchTerm('');
     setSelectedSemester('All');
     setSelectedDepartment('All');
+  };
+
+  const handleNoteClick = (note) => {
+    fetchNoteDetail(note.id);
   };
 
   return (
@@ -492,15 +659,21 @@ const NoteSharing = () => {
               </div>
             </div>
 
+            {/* Loading State */}
+            {isLoading && notesData.length === 0 && (
+              <div className="flex justify-center items-center py-20">
+                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+
             {/* Notes Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredNotes.map((note) => {
-                const borderColor = semesterColors[note.semester];
+                const borderColor = semesterColors[note.semester] || semesterColors['Others'];
                 
                 return (
                   <div
                     key={note.id}
-                    onClick={() => setExpandedNote(note)}
                     className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
                   >
                     <div 
@@ -518,7 +691,10 @@ const NoteSharing = () => {
                             Sem {note.semester}
                           </span>
                           <span className="px-2 py-1 text-white text-xs font-bold rounded-full border border-gray-500">
-                            {note.department}
+                            {note.department?.toUpperCase()}
+                          </span>
+                          <span className="px-2 py-1 text-white text-xs font-bold rounded-full border border-gray-500">
+                            {note.section?.toUpperCase()}
                           </span>
                         </div>
                       </div>
@@ -540,23 +716,38 @@ const NoteSharing = () => {
                            WebkitLineClamp: 2,
                            WebkitBoxOrient: 'vertical'
                          }}>
-                        {note.description}
+                        {note.description || 'No description available.'}
                       </p>
 
                       {/* Stats */}
                       <div className="bg-white/5 rounded-lg p-3 mb-4 border-l-4" style={{ borderColor: borderColor }}>
                         <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Downloads</p>
-                        <p className="text-2xl font-bold text-white">{note.downloads}</p>
+                        <p className="text-2xl font-bold text-white">{note.total_downloads}</p>
                       </div>
 
                       {/* Footer */}
                       <div className="flex justify-between items-center text-sm text-gray-400">
-                        <span className="text-white font-semibold">{note.uploader}</span>
+                        <Link 
+                          to={`/user-profile/${note.user?.id}`}
+                          className="flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                        >
+                          {/* Profile Photo Circle */}
+                          <div className="w-6 h-6 rounded-full overflow-hidden border border-blue-500">
+                            <img 
+                              src={note.user?.profile_photo || '/default-avatar.png'} 
+                              alt={note.user?.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <span className="text-white font-semibold hover:underline">
+                            {note.user?.full_name}
+                          </span>
+                        </Link>
                         <button 
                           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold rounded-lg hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg border border-purple-500/30"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setExpandedNote(note);
+                            handleNoteClick(note);
                           }}
                         >
                           View
@@ -571,8 +762,21 @@ const NoteSharing = () => {
               })}
             </div>
 
+            {/* Load More Button */}
+            {hasMore && filteredNotes.length > 0 && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={loadMoreNotes}
+                  disabled={isLoading}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? 'Loading...' : 'Load More Notes'}
+                </button>
+              </div>
+            )}
+
             {/* Empty State */}
-            {filteredNotes.length === 0 && (
+            {!isLoading && filteredNotes.length === 0 && (
               <div className="text-center py-16">
                 <h3 className="text-2xl font-bold text-white mb-3">
                   No notes found

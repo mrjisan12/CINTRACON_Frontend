@@ -1,11 +1,14 @@
 // Pages/Client/Authentication/Login.jsx
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation  } from "react-router-dom";
 import { toast } from "react-toastify";
-import { login } from "../../../api/authApi";
+import { login as loginApi } from "../../../api/authApi";
+import { useAuth } from '../../../contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +20,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await login({ email, password });
+      const response = await loginApi({ email, password });
       const { msg, success, data } = response.data;
 
       if (success) {
@@ -28,7 +31,16 @@ const Login = () => {
         localStorage.setItem("accessToken", data.accessToken);
 
         // Navigate to /home
-        navigate("/home");
+        // navigate("/home");
+
+        // ✅ AuthContext update করুন
+        login(data.user, data.accessToken); // user data এবং token পাঠান
+
+         // Redirect to intended page or home
+        const from = location.state?.from?.pathname || '/home';
+        navigate(from, { replace: true });
+
+
       } else {
         // Show error toast
         toast.error("Login failed. Please try again.");

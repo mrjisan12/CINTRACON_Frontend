@@ -23,7 +23,7 @@ export const signup = (data) => {
 
 // Profile (Authenticated)
 export const getProfile = (token) =>
-    api.get("auth/profile", {
+    api.post("auth/user-profile", {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -58,3 +58,20 @@ export const resetPassword = (data) =>
     api.post("auth/reset-password", data, {
         headers: { "Content-Type": "application/json" },
     });
+
+// Get current user profile
+export const getProfileInfo = (token, filters = {}) => {
+    const { page = 1, size = 10 } = filters;
+
+    return api.post("auth/user-profile",
+        {
+            page,
+            size
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+};

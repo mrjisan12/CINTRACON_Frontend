@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   FaHeart,
   FaRegComment,
@@ -7,9 +7,8 @@ import {
   FaSadTear,
   FaAngry,
 } from 'react-icons/fa';
-import { getNewsfeedPosts, getPostDetails, addReaction, addComment } from '../../../api/homeApi';
+import { getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
-import { Link } from 'react-router-dom';
 
 const reactions = [
   { name: 'Like', icon: <FaThumbsUp className="text-blue-500" />, key: 'like' },
@@ -18,11 +17,8 @@ const reactions = [
   { name: 'Angry', icon: <FaAngry className="text-orange-600" />, key: 'angry' },
 ];
 
-const NewsFeed = () => {
+const UserPosts = ({ profilePosts }) => {
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
   const [userReactions, setUserReactions] = useState({});
   const [hoveredPost, setHoveredPost] = useState(null);
   const [commentModal, setCommentModal] = useState({ 
@@ -37,22 +33,14 @@ const NewsFeed = () => {
   const [profileInfo, setProfileInfo] = useState(null);
   
   const reactionTimeout = useRef();
-  const observer = useRef();
-  const lastPostElementRef = useRef();
   const commentInputRef = useRef();
 
-  // Listen for post creation events
+  // Set posts when profilePosts prop changes
   useEffect(() => {
-    const handlePostCreated = () => {
-      fetchPosts(1, false);
-    };
-
-    window.addEventListener('postCreated', handlePostCreated);
-    
-    return () => {
-      window.removeEventListener('postCreated', handlePostCreated);
-    };
-  }, []);
+    if (profilePosts) {
+      setPosts(profilePosts);
+    }
+  }, [profilePosts]);
 
   // Fetch Profile Info
   useEffect(() => {
@@ -67,7 +55,7 @@ const NewsFeed = () => {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch navbar info:", error);
+        console.error("Failed to fetch profile info:", error);
       }
     };
 
@@ -88,42 +76,6 @@ const NewsFeed = () => {
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays}d ago`;
-    }
-  };
-
-  // Fetch posts
-  const fetchPosts = async (pageNum = 1, append = false) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const token = localStorage.getItem('accessToken');
-      
-      if (!token) {
-        setError('Please login to view posts');
-        setLoading(false);
-        return;
-      }
-      
-      const response = await getNewsfeedPosts(pageNum, 10, token);
-      
-      if (response.data.success) {
-        const newPosts = response.data.data;
-        
-        if (append) {
-          setPosts(prevPosts => [...prevPosts, ...newPosts]);
-        } else {
-          setPosts(newPosts);
-        }
-        
-        setHasMore(newPosts.length === 10);
-        setPage(pageNum + 1);
-      }
-    } catch (err) {
-      setError('Failed to load posts. Please try again.');
-      console.error('Error fetching posts:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -199,16 +151,6 @@ const NewsFeed = () => {
       if (response.data.success) {
         console.log('Reaction added successfully:', response.data);
         
-        // Optional: Refresh post data from API to ensure consistency
-        // const updatedPost = await fetchPostDetails(postId);
-        // if (updatedPost) {
-        //   setPosts(prevPosts => 
-        //     prevPosts.map(post => 
-        //       post.id === postId ? updatedPost : post
-        //     )
-        //   );
-        // }
-
         // Update comment modal if open
         if (commentModal.open && commentModal.post?.id === postId) {
           setCommentModal(prev => ({
@@ -387,20 +329,6 @@ const NewsFeed = () => {
     }
   };
 
-  // Infinite scroll observer
-  const lastPostRef = useCallback(node => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        fetchPosts(page, true);
-      }
-    });
-    
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, page]);
-
   // Handle comment modal open
   const handleCommentModalOpen = async (post) => {
     try {
@@ -433,11 +361,6 @@ const NewsFeed = () => {
       setCommentModal(prev => ({ ...prev, loading: false }));
     }
   };
-
-  // Initial load
-  useEffect(() => {
-    fetchPosts(1, false);
-  }, []);
 
   const handleReactionMouseEnter = (postId) => {
     if (reactionTimeout.current) clearTimeout(reactionTimeout.current);
@@ -475,18 +398,26 @@ const NewsFeed = () => {
     return { name: 'Like', icon: <FaThumbsUp className="text-gray-300" /> };
   };
 
+  // No posts state
+  if (!posts || posts.length === 0) {
+    return (
+      <div className="text-center text-gray-400 py-8">
+        No posts yet. Start sharing your thoughts!
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 mb-10">
       {error && (
         <div className="bg-red-500/10 border border-red-500 rounded-2xl p-4 text-red-400 text-center">
           {error}
         </div>
       )}
 
-      {posts.map((post, index) => (
+      {posts.map((post) => (
         <div
           key={post.id}
-          ref={index === posts.length - 1 ? lastPostRef : null}
           className="bg-[#20222B] rounded-2xl shadow p-6 flex flex-col gap-4 relative"
         >
           {/* Post Header */}
@@ -501,12 +432,9 @@ const NewsFeed = () => {
                 }}
               />
               <div>
-                <Link 
-                  to={`/user-profile/${post.user?.id}`} 
-                  className="text-white font-semibold leading-tight text-base hover:underline"
-                >
+                <div className="text-white font-semibold leading-tight text-base">
                   {post.user?.full_name || 'Unknown User'}
-                </Link>
+                </div>
                 <div className="text-xs text-gray-400">
                   {formatTime(post.created_at)}
                 </div>
@@ -626,20 +554,6 @@ const NewsFeed = () => {
           </div>
         </div>
       ))}
-
-      {/* Loading Indicator */}
-      {loading && (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {/* No More Posts */}
-      {!hasMore && posts.length > 0 && (
-        <div className="text-center text-gray-400 py-8">
-          No more posts to load
-        </div>
-      )}
 
       {/* 🖼️ Image Modal */}
       {imageModal.open && (
@@ -825,4 +739,4 @@ const NewsFeed = () => {
   );
 };
 
-export default NewsFeed;
+export default UserPosts;

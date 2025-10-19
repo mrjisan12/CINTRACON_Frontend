@@ -9,6 +9,7 @@ import AdminSignUp from "../Pages/Client/Authentication/AdminSignUp";
 import HomePage from "../Pages/Client/Home/HomePage";
 import AllStudentsPage from "../Pages/Client/AllStudents/AllStudentsPage";
 import Profile from "../Pages/Client/Profile/Profile";
+import UserProfileById from "../Pages/Client/Profile/UserProfileById";
 import ProfileEdit from "../Pages/Client/Profile/ProfileEdit";
 import NoteSharing from "../Pages/Client/NoteSharing/NoteSharing";
 import JobPage from "../Pages/Client/Job/JobPage";
@@ -27,13 +28,14 @@ import JobsManage from "../Pages/Admin/Jobs/JobsManage";
 import EventsManage from "../Pages/Admin/Events/EventsManage";
 import AnnouncementManage from "../Pages/Admin/Announcement/AnnouncementManage";
 import Settings from "../Pages/Admin/Settings/Settings";
+import ProtectedRoute from "../Components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <Client />,
     children: [
-      // Client Section
+      // Public Routes
       { path: "/", element: <Landing /> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
@@ -41,19 +43,105 @@ export const router = createBrowserRouter([
       { path: "/send-otp", element: <ForgetPassword /> },
       { path: "/check-otp", element: <OTP /> },
       { path: "/reset-password", element: <ConfirmPass /> },
-      { path: "/home", element: <HomePage /> },
-      { path: "/all-students", element: <AllStudentsPage /> },
-      { path: "/profile", element: <Profile /> },
-      { path: "/profile-edit", element: <ProfileEdit /> },
-      { path: "/note-sharing", element: <NoteSharing /> },
-      { path: "/jobs", element: <JobPage /> },
-      { path: "/forum", element: <ForumPage /> },
-      { path: "/upcoming-events", element: <UpcomingEvents /> },
-      { path: "/announcement", element: <Announcement /> },
-      { path: "/cintracon-ai", element: <CintraconAI /> },
       
-      // Admin Section
-      { path: "/admin", element: <AdminLayout />,
+      // Protected Client Routes
+      { 
+        path: "/home", 
+        element: (
+          <ProtectedRoute>
+            <HomePage />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/all-students", 
+        element: (
+          <ProtectedRoute>
+            <AllStudentsPage />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/profile", 
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/user-profile/:userId", 
+        element: (
+          <ProtectedRoute>
+            <UserProfileById />
+          </ProtectedRoute>
+        )
+      },
+      { 
+        path: "/profile-edit", 
+        element: (
+          <ProtectedRoute>
+            <ProfileEdit />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/note-sharing", 
+        element: (
+          <ProtectedRoute>
+            <NoteSharing />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/jobs", 
+        element: (
+          <ProtectedRoute>
+            <JobPage />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/forum", 
+        element: (
+          <ProtectedRoute>
+            <ForumPage />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/upcoming-events", 
+        element: (
+          <ProtectedRoute>
+            <UpcomingEvents />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/announcement", 
+        element: (
+          <ProtectedRoute>
+            <Announcement />
+          </ProtectedRoute>
+        ) 
+      },
+      { 
+        path: "/cintracon-ai", 
+        element: (
+          <ProtectedRoute>
+            <CintraconAI />
+          </ProtectedRoute>
+        ) 
+      },
+      
+      // Admin Routes (Protected + Admin Only)
+      { 
+        path: "/admin", 
+        element: (
+          // <ProtectedRoute adminOnly={true}>
+            <AdminLayout />
+          // </ProtectedRoute>
+        ),
         children: [
           { path: "dashboard", element: <Dashboard /> },
           { path: "all-students", element: <AllStudents /> },

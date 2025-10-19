@@ -1,14 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import LeftSideBar from "../../../Components/LeftSideBar";
 import NavbarMain from "../../../Ui/NavbarMain";
-
-const students = [
-  { name: "Mizanur Rahman Jisan", avatar: "jisan.jpg", department: "CSE", semester: "3.2", section: "D", batch: "52", points: 925 },
-  { name: "Shahid AL Mamim", avatar: "mamim.jpg", department: "EEE", semester: "2.1", section: "A", batch: "53", points: 870 },
-  { name: "Nashra Zakir Nawmi", avatar: "nawmi.jpg", department: "BBA", semester: "1.2", section: "B", batch: "54", points: 790 },
-  { name: "Alif Mahmud Talha", avatar: "alif.jpg", department: "CSE", semester: "3.1", section: "C", batch: "52", points: 910 },
-  { name: "Lubna Akter", avatar: "lubna.jpg", department: "CSE", semester: "3.2", section: "D", batch: "52", points: 925 },
-];
+import { getAllStudentsInfo } from "../../../api/allStudentsApi"; 
 
 // filter options
 const DEPARTMENTS = ["All", "CSE", "EEE", "BBA", "Pharm", "Civil", "English", "Law"];
@@ -28,24 +22,121 @@ const AllStudentsPage = () => {
   const [query, setQuery] = useState("");
   const [dept, setDept] = useState("All");
   const [sem, setSem] = useState("All");
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return students.filter((s) => {
-      const matchesName =
-        !q ||
-        s.name.toLowerCase().includes(q);
-      const matchesDept = dept === "All" || s.department === dept;
-      const matchesSem = sem === "All" || s.semester === sem;
-      return matchesName && matchesDept && matchesSem;
-    });
+  // API থেকে students ডেটা fetch করা
+  const fetchStudents = async (searchQuery = "", department = "All", semester = "All") => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem("accessToken");
+      
+      if (!token) {
+        setError("Please login to view students");
+        setLoading(false);
+        return;
+      }
+
+      // Prepare filters for API
+      const filters = {
+        page: 1,
+        size: 50, // You can adjust this as needed
+        search: searchQuery,
+        department: department === "All" ? "" : department.toLowerCase(),
+        semester: semester === "All" ? "" : semester
+      };
+
+      const response = await getAllStudentsInfo(token, filters);
+      console.log("Fetched students data:", response.data);
+      
+      if (response.data.success) {
+        setStudents(response.data.data);
+      } else {
+        setError("Failed to fetch students");
+      }
+    } catch (err) {
+      setError("Error fetching students data");
+      console.error("Error fetching students:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load and when filters change
+  useEffect(() => {
+    // Debounce search to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      fetchStudents(query, dept, sem);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
   }, [query, dept, sem]);
+
+  // Filtering logic (now handled by API, but keeping for any client-side filtering if needed)
+  const filtered = useMemo(() => {
+    // Since we're filtering via API, we can just return all students
+    // But keeping this for any additional client-side filtering if needed
+    return students;
+  }, [students]);
 
   const clearFilters = () => {
     setQuery("");
     setDept("All");
     setSem("All");
   };
+
+  // Handle view profile button click
+  const handleViewProfile = (studentId) => {
+    navigate(`/user-profile/${studentId}`);
+  };
+
+  // Loading state
+  if (loading && students.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#181820]">
+        <NavbarMain />
+        <div className="max-w-7xl mx-auto px-3 md:px-6 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <aside className="hidden lg:block">
+              <LeftSideBar />
+            </aside>
+            <main className="flex-1 flex justify-center items-center h-64">
+              <div className="text-white text-lg">Loading students...</div>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && students.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#181820]">
+        <NavbarMain />
+        <div className="max-w-7xl mx-auto px-3 md:px-6 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <aside className="hidden lg:block">
+              <LeftSideBar />
+            </aside>
+            <main className="flex-1 flex justify-center items-center h-64">
+              <div className="text-red-400 text-lg">{error}</div>
+              <button 
+                onClick={() => fetchStudents(query, dept, sem)}
+                className="ml-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                Retry
+              </button>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#181820]">
@@ -124,11 +215,31 @@ const AllStudentsPage = () => {
               </div>
             </div>
 
+            {/* Loading indicator when filtering */}
+            {loading && students.length > 0 && (
+              <div className="text-center text-blue-400 mb-4">
+                Updating results...
+              </div>
+            )}
+
+            {/* Error message when filtering with existing data */}
+            {error && students.length > 0 && (
+              <div className="text-center text-red-400 mb-4">
+                {error}
+                <button 
+                  onClick={() => fetchStudents(query, dept, sem)}
+                  className="ml-2 text-blue-400 hover:text-blue-300 underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
             {/* cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 xl:gap-8">
               {filtered.map((student, idx) => (
                 <div
-                  key={idx}
+                  key={student.id}
                   className="group h-full w-full rounded-3xl p-6 xl:p-7 bg-gradient-to-b from-[#20222B] to-[#1b1d25] ring-1 ring-[#2A2D3A] shadow-sm
                              hover:shadow-xl hover:ring-[#3a3f51] transition relative overflow-hidden"
                   style={{
@@ -140,20 +251,27 @@ const AllStudentsPage = () => {
 
                   {/* avatar */}
                   <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-[#232A36] shadow mb-4">
-                    <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={student.profile_photo || "/default-avatar.png"} 
+                      alt={student.full_name} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "/default-avatar.png";
+                      }}
+                    />
                   </div>
 
                   {/* name */}
                   <h3 className="text-white font-semibold text-lg text-center group-hover:text-blue-400 transition">
-                    {student.name}
+                    {student.full_name}
                   </h3>
 
                   {/* meta */}
                   <p className="text-gray-400 text-sm text-center mt-1">
-                    {student.department} | {student.semester} Semester
+                    {student.department.toUpperCase()} | {student.semester} Semester
                   </p>
                   <p className="text-gray-400 text-sm text-center">
-                    {student.section} Section | Batch {student.batch}
+                    {student.section} Section | Batch {student.batch_no}
                   </p>
 
                   {/* points */}
@@ -165,9 +283,10 @@ const AllStudentsPage = () => {
 
                   {/* button */}
                   <button
+                    onClick={() => handleViewProfile(student.id)}
                     className="mt-6 w-full rounded-full font-semibold py-2.5
                                bg-gradient-to-r from-blue-700 to-purple-700 text-white
-                               hover:from-blue-600 hover:to-purple-800 shadow"
+                               hover:from-blue-600 hover:to-purple-800 shadow transition"
                   >
                     View Profile
                   </button>
@@ -176,7 +295,7 @@ const AllStudentsPage = () => {
             </div>
 
             {/* empty state */}
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !loading && (
               <div className="mt-10 text-center text-gray-400">
                 No students found for the current filters.
               </div>

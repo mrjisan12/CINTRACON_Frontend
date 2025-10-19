@@ -1,14 +1,26 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useAuth } from '../contexts/AuthContext';
 import ScrollToTop from "../Ui/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
 export default function Client() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, loading } = useAuth();
 
-  // (your reveal code stays the same)
+  // Public routes that should redirect to home if authenticated
+  const publicRoutes = ['/login', '/signup', '/admin-signup', '/send-otp', '/check-otp', '/reset-password'];
+
+  useEffect(() => {
+    // Redirect authenticated users away from auth pages
+    if (!loading && isAuthenticated && publicRoutes.includes(location.pathname)) {
+      navigate('/home', { replace: true });
+    }
+  }, [location.pathname, isAuthenticated, loading, navigate]);
+
+  // (your existing reveal code)
   useEffect(() => {
     const obs = new IntersectionObserver(
       (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("show")),
@@ -31,14 +43,21 @@ export default function Client() {
     };
   }, [location.pathname]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-      <ScrollToTop /> {/* <-- important */}
+      <ScrollToTop />
       <main className="flex-1">
         <Outlet />
       </main>
 
-       {/* 🔥 Toast Container এখানে বসাও */}
       <ToastContainer 
         position="top-right"
         autoClose={2000}
@@ -48,8 +67,6 @@ export default function Client() {
         pauseOnHover
         theme="colored"
       />
-
-
     </div>
   );
 }

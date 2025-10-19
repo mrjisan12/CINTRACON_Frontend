@@ -1,6 +1,8 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { FaHome, FaUsers, FaBook, FaBriefcase, FaComments, FaCalendarAlt, FaBullhorn, FaProjectDiagram } from 'react-icons/fa';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { getProfileInfo } from '../api/authApi';
+import { getDevelopers } from '../api/homeApi'; // আপনার API file import করুন
 
 const menu = [
   { icon: <FaHome />, label: 'Home', to: '/home' },
@@ -13,17 +15,62 @@ const menu = [
   { icon: <FaProjectDiagram />, label: 'CINTRACON AI', to: '/cintracon-ai' },
 ];
 
-const devs = [
-  { name: 'Miznur Rahman Jisan', avatar: 'jisan.jpg' },
-  { name: 'Shahid Al Mamin', avatar: 'mamim.jpg' },
-  { name: 'Lamia Akter Jesmin', avatar: 'jesmin.jpeg' },
-];
-
 const LeftSideBar = () => {
   const navigate = useNavigate();
+  const [profileInfo, setProfileInfo] = useState(null);
+  const [developers, setDevelopers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const handleNav = (to) => {
     navigate(to);
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
+
+  // Fetch Profile Info
+  useEffect(() => {
+    const fetchProfileInfo = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          const response = await getProfileInfo(token);
+          const { success, data } = response.data;
+          if (success) {
+            setProfileInfo(data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile info:", error);
+      }
+    };
+
+    fetchProfileInfo();
+  }, []);
+
+  // Fetch Developers List
+  useEffect(() => {
+    const fetchDevelopers = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (token) {
+          const response = await getDevelopers(token);
+          const { success, data } = response.data;
+          if (success) {
+            setDevelopers(data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch developers:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDevelopers();
+  }, []);
+
+  // Handle developer click - navigate to their profile
+  const handleDeveloperClick = (developerId) => {
+    navigate(`/user-profile/${developerId}`);
   };
 
   return (
@@ -39,10 +86,14 @@ const LeftSideBar = () => {
         role="button"
         aria-label="Go to profile"
       >
-        <img src="jisan.jpg" alt="avatar" className="h-10 w-10 rounded-full object-cover" />
+        <img 
+          src={profileInfo?.profile_photo || '/default-avatar.png'} 
+          alt="avatar" 
+          className="h-10 w-10 rounded-full object-cover" 
+        />
         <div>
-          <div className="text-white font-medium leading-tight text-base">Mizanur Rahman Jisan</div>
-          <div className="text-xs text-gray-300">2.5K Follower</div>
+          <div className="text-white font-medium leading-tight text-base">{profileInfo?.full_name || 'User'}</div>
+          <div className="text-xs text-gray-300">{profileInfo?.role == 'student' ? 'Student' : 'Admin'}</div>
         </div>
       </div>
 
@@ -63,24 +114,49 @@ const LeftSideBar = () => {
         ))}
       </nav>
 
-      {/* Developers */}
-      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-3 mb-10">
-        <div className="text-gray-200 text-sm mb-2 font-semibold">Developers of CINTRACON</div>
-        <ul className="flex flex-col gap-2">
-          {devs.map((dev, idx) => (
-            <li
-              key={idx}
-              className="flex items-center gap-2 cursor-pointer hover:underline"
-              onClick={() => handleNav('/profile')}
-              tabIndex={0}
-              role="button"
-              aria-label={`Go to ${dev.name}'s profile`}
-            >
-              <img src={dev.avatar} alt={dev.name} className="h-7 w-7 rounded-full object-cover" />
-              <span className="text-gray-100 text-sm">{dev.name}</span>
-            </li>
-          ))}
-        </ul>
+      {/* Developers Section */}
+      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-2 mb-10">
+        <div className="text-gray-200 text-sm mb-3 font-semibold flex items-center gap-2">
+          <FaUsers className="text-blue-400" />
+          Developers of CINTRACON
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+          </div>
+        ) : developers.length > 0 ? (
+          <ul className="flex flex-col gap-1">
+            {developers.map((developer, idx) => (
+              <li
+                key={developer.id}
+                className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-[#2A2D38] transition-colors"
+                onClick={() => handleDeveloperClick(developer.id)}
+                tabIndex={0}
+                role="button"
+                aria-label={`View ${developer.full_name}'s profile`}
+              >
+                <img 
+                  src={developer.profile_photo || '/default-avatar.png'} 
+                  alt={developer.full_name} 
+                  className="h-8 w-8 rounded-full object-cover border border-gray-600" 
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="text-gray-100 text-sm font-medium block truncate">
+                    {developer.full_name}
+                  </span>
+                  <span className="text-gray-400 text-xs capitalize">
+                    {developer.department}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="text-gray-400 text-sm text-center py-4">
+            No developers found
+          </div>
+        )}
       </div>
     </aside>
   );
