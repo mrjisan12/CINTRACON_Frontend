@@ -184,7 +184,7 @@ const NavbarMain = () => {
               <span className="text-white font-semibold text-lg">Notifications</span>
               <button className="text-xs text-blue-400 hover:underline" onClick={() => setNotificationOpen(false)}>Mark all as read</button>
             </div>
-            <ul className="max-h-80 overflow-y-auto divide-y divide-[#232F3E]">
+            <ul className="max-h-80 overflow-y-auto divide-y divide-[#232F3E] hide-scrollbar">
               {/* Example notifications, replace with real data */}
               <li className="flex items-start gap-3 px-5 py-4 hover:bg-[#20222B] cursor-pointer transition">
                 <img src="/mamim.jpg" alt="notif" className="h-10 w-10 rounded-full object-cover" />

@@ -1,67 +1,46 @@
 import React, { useState, useEffect } from "react";
 import LeftSideBar from "../../../Components/LeftSideBar";
 import NavbarMain from "../../../Ui/NavbarMain";
-
-// Sample announcements data from admin and Cintracon team only
-const announcementsData = [
-  {
-    id: 1,
-    title: "CINTRACON Platform Launch",
-    content:
-      "The Cintracon team is thrilled to welcome you all to the platform — a space built by UAP students for UAP students and alumni. Our goal is to create a connected community where you can share knowledge, explore opportunities, and engage in meaningful discussions. This is just the beginning, and many exciting features are on the way, including course-specific forums, alumni networking, and AI-powered suggestions. Stay active, share your thoughts, and help us make Cintracon a hub for collaboration and growth. Thank you for being with us — together, we'll make Cintracon better every day!",
-    author: "Cintracon Team",
-    date: "2025-10-05",
-    isNew: true,
-  },
-  {
-    id: 2,
-    title: "New Feature Update - AI Assistant",
-    content:
-      "We're excited to announce the launch of our AI-powered assistant feature! Now you can get instant help with your queries, course recommendations, and study tips. The AI assistant is available 24/7 and can help you with various academic and platform-related questions. Try it out and let us know your feedback!",
-    author: "Cintracon Team",
-    date: "2025-10-04",
-    isNew: true,
-  },
-  {
-    id: 3,
-    title: "Platform Maintenance Notice",
-    content:
-      "There will be a scheduled maintenance on Saturday, October 12th from 2:00 AM to 6:00 AM. During this time, the platform will be temporarily unavailable. We apologize for any inconvenience and appreciate your understanding as we work to improve your experience.",
-    author: "Admin",
-    date: "2025-10-03",
-    isNew: false,
-  },
-  {
-    id: 4,
-    title: "Terms of Service Update",
-    content:
-      "We've updated our Terms of Service and Privacy Policy. Please review the changes to understand how we handle your data and the rules for using our platform. The updates include better data protection measures and clearer guidelines on content sharing.",
-    author: "Admin",
-    date: "2025-10-02",
-    isNew: true,
-  },
-  {
-    id: 5,
-    title: "Mobile App Coming Soon",
-    content:
-      "Great news! The CINTRACON mobile app is currently in development and will be launched next month. The app will include all platform features with optimized mobile experience, push notifications, and offline access to study materials.",
-    author: "Cintracon Team",
-    date: "2025-10-01",
-    isNew: false,
-  },
-  {
-    id: 6,
-    title: "Bug Fixes & Performance Improvements",
-    content:
-      "We've deployed several bug fixes and performance improvements to enhance your experience. Fixed issues include login problems, file upload errors, and notification delays. If you encounter any issues, please report them through the feedback system.",
-    author: "Admin",
-    date: "2025-09-28",
-    isNew: false,
-  },
-];
+import { getAllAnnouncements } from "../../../api/announcementApi"; // Adjust the path as needed
 
 const Announcement = () => {
+  const [announcementsData, setAnnouncementsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expandedAnnouncement, setExpandedAnnouncement] = useState(null);
+
+  // Fetch announcements from API
+  // Fetch announcements from API
+const fetchAnnouncements = async () => {
+  try {
+    setLoading(true);
+    // Get token from localStorage or your auth context
+    const token = localStorage.getItem("accessToken");
+    
+    const response = await getAllAnnouncements(token, {
+      page: 1,
+      size: 10
+    });
+    
+    console.log("API Response:", response.data); // Add this for debugging
+    
+    if (response.data.success) {
+      // FIX: response.data.data is already the array, not response.data.data.announcements
+      setAnnouncementsData(response.data.data || []);
+    } else {
+      setError('Failed to fetch announcements');
+    }
+  } catch (err) {
+    setError('Error fetching announcements');
+    console.error('Error fetching announcements:', err);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
 
   // ESC key closes modal (small UX improvement)
   useEffect(() => {
@@ -128,6 +107,60 @@ const Announcement = () => {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#181820]">
+        <NavbarMain />
+        <div className="max-w-7xl mx-auto px-3 md:px-6 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <aside className="hidden lg:block">
+              <LeftSideBar />
+            </aside>
+            <main className="flex-1">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Announcement</h1>
+                <p className="text-gray-400">
+                  Important updates from Cintracon Team and Platform Administration
+                </p>
+              </div>
+              <div className="flex justify-center items-center py-12">
+                <div className="text-white text-lg">Loading announcements...</div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#181820]">
+        <NavbarMain />
+        <div className="max-w-7xl mx-auto px-3 md:px-6 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <aside className="hidden lg:block">
+              <LeftSideBar />
+            </aside>
+            <main className="flex-1">
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-white mb-2">Announcement</h1>
+                <p className="text-gray-400">
+                  Important updates from Cintracon Team and Platform Administration
+                </p>
+              </div>
+              <div className="flex justify-center items-center py-12">
+                <div className="text-red-400 text-lg">{error}</div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#181820]">
       <NavbarMain />
@@ -144,19 +177,10 @@ const Announcement = () => {
             <div className="relative p-6 border-b border-[#2A2D3A]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {expandedAnnouncement.isNew && (
-                    <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30">
-                      🆕 NEW
-                    </span>
-                  )}
                   <span
-                    className={`px-3 py-1 text-white text-sm font-bold rounded-full border ${
-                      expandedAnnouncement.author === "Cintracon Team"
-                        ? "bg-purple-500/20 border-purple-500/30"
-                        : "bg-blue-500/20 border-blue-500/30"
-                    }`}
+                    className="px-3 py-1 text-white text-sm font-bold rounded-full border bg-blue-500/20 border-blue-500/30"
                   >
-                    {expandedAnnouncement.author}
+                    ADMIN
                   </span>
                 </div>
                 <button
@@ -173,14 +197,14 @@ const Announcement = () => {
               </h2>
 
               <div className="flex items-center gap-4 mt-3 text-sm">
-                <span className="text-gray-400">📅 {formatDate(expandedAnnouncement.date)}</span>
+                <span className="text-gray-400">📅 {formatDate(expandedAnnouncement.created_at)}</span>
               </div>
             </div>
 
             {/* Modal Content */}
             <div className="p-6 max-h-96 overflow-y-auto">
               <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-line">
-                {expandedAnnouncement.content}
+                {expandedAnnouncement.description}
               </p>
             </div>
 
@@ -217,62 +241,60 @@ const Announcement = () => {
 
             {/* Announcements Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {announcementsData.map((announcement, index) => {
-                const colors = cardColors[index % cardColors.length];
+              {announcementsData.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-400 text-lg">No announcements found</div>
+                </div>
+              ) : (
+                announcementsData.map((announcement, index) => {
+                  const colors = cardColors[index % cardColors.length];
 
-                return (
-                  <div
-                    key={announcement.id}
-                    className="group rounded-2xl p-6 bg-[#1E2130] border-2 transition-all duration-300 hover:scale-105 cursor-pointer transform-gpu"
-                    style={{
-                      borderColor: colors.primary,
-                    }}
-                  >
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        {announcement.isNew && (
-                          <span className="px-3 py-1 bg-green-500/20 text-green-400 text-sm font-bold rounded-full border border-green-500/30">
-                            🆕 NEW
-                          </span>
-                        )}
+                  return (
+                    <div
+                      key={announcement.id}
+                      className="group rounded-2xl p-6 bg-[#1E2130] border-2 transition-all duration-300 hover:scale-105 cursor-pointer transform-gpu"
+                      style={{
+                        borderColor: colors.primary,
+                      }}
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          {/* Removed NEW badge since API doesn't provide this field */}
+                        </div>
+                        <span
+                          className="px-3 py-1 text-white text-xs font-bold rounded-full border bg-blue-500/20 border-blue-500/30"
+                        >
+                          ADMIN
+                        </span>
                       </div>
-                      <span
-                        className={`px-3 py-1 text-white text-xs font-bold rounded-full border ${
-                          announcement.author === "Cintracon Team"
-                            ? "bg-purple-500/20 border-purple-500/30"
-                            : "bg-blue-500/20 border-blue-500/30"
-                        }`}
-                      >
-                        {announcement.author}
-                      </span>
+
+                      {/* Title */}
+                      <h3 className="text-white font-bold text-lg mb-3 leading-tight">
+                        {announcement.title}
+                      </h3>
+
+                      {/* Content Preview */}
+                      <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-3">
+                        {announcement.description}
+                      </p>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4 border-t border-[#2A2D3A]">
+                        <div className="text-gray-400 text-xs">📅 {formatDate(announcement.created_at)}</div>
+
+                        {/* Read More Button */}
+                        <button
+                          onClick={() => handleReadMore(announcement)}
+                          className="px-3 py-1 bg-[#2A2D3A] text-white text-sm font-bold rounded-lg hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A]"
+                        >
+                          Read More
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Title */}
-                    <h3 className="text-white font-bold text-lg mb-3 leading-tight">
-                      {announcement.title}
-                    </h3>
-
-                    {/* Content Preview */}
-                    <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-3">
-                      {announcement.content}
-                    </p>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-4 border-t border-[#2A2D3A]">
-                      <div className="text-gray-400 text-xs">📅 {formatDate(announcement.date)}</div>
-
-                      {/* Read More Button */}
-                      <button
-                        onClick={() => handleReadMore(announcement)}
-                        className="px-3 py-1 bg-[#2A2D3A] text-white text-sm font-bold rounded-lg hover:bg-[#3A3D4A] transition-all duration-200 border border-[#3A3D4A]"
-                      >
-                        Read More
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </main>
         </div>
