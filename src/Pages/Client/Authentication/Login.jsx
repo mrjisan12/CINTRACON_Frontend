@@ -9,7 +9,7 @@ import MaintenanceModal from '../../../Components/MaintenanceModal';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+     const { login, isAuthenticated } = useAuth();
     const { maintenance, loading: maintenanceLoading } = useMaintenance();
     const location = useLocation();
     const [email, setEmail] = useState("");
@@ -17,8 +17,15 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [remember, setRemember] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+// Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            const from = location.state?.from?.pathname || '/home';
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, navigate, location]);
 
-    // Check maintenance status on component mount
+    // Check maintenance status
     useEffect(() => {
         if (maintenance.status) {
             toast.error("System is under maintenance. Please try again later.");
@@ -28,7 +35,6 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Prevent login if maintenance is active
         if (maintenance.status) {
             toast.error("Cannot login during maintenance period.");
             return;
@@ -41,24 +47,16 @@ const Login = () => {
             const { msg, success, data } = response.data;
 
             if (success) {
-                // Show success toast
                 toast.success(msg);
-
-                // Save accessToken to localStorage
-                localStorage.setItem("accessToken", data.accessToken);
-
-                // ✅ AuthContext update করুন
+                
+                // AuthContext will handle the rest including redirect
                 login(data.user, data.accessToken);
-
-                // Redirect to intended page or home
-                const from = location.state?.from?.pathname || '/home';
-                navigate(from, { replace: true });
+                
+                // Don't navigate here - let the useEffect above handle it
             } else {
-                // Show error toast
                 toast.error("Login failed. Please try again.");
             }
         } catch (error) {
-            // Handle API errors
             toast.error(
                 error.response?.data?.data?.non_field_errors?.join(", ") ||
                 "An error occurred. Please try again."
@@ -67,6 +65,8 @@ const Login = () => {
             setIsLoading(false);
         }
     };
+
+
 
     // Show loading while checking maintenance status
     if (maintenanceLoading) {

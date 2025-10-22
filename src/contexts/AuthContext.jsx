@@ -1,71 +1,77 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { getProfile } from '../api/authApi';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { getProfileInfo } from '../api/authApi';
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('accessToken'));
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    if (token) {
-      // Verify token and get user data
-      verifyToken();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
+    // Check for existing token on mount
+    useEffect(() => {
+        const initializeAuth = async () => {
+            const storedToken = localStorage.getItem('accessToken');
+            
+            if (storedToken) {
+                try {
+                    // Verify token is valid by fetching user profile
+                    const response = await getProfileInfo(storedToken);
+                    if (response.data.success) {
+                        setToken(storedToken);
+                        setUser(response.data.data);
+                        setIsAuthenticated(true);
+                    } else {
+                        // Token is invalid, clear it
+                        localStorage.removeItem('accessToken');
+                    }
+                } catch (error) {
+                    console.error('Token validation failed:', error);
+                    localStorage.removeItem('accessToken');
+                }
+            }
+            setLoading(false);
+        };
 
-  const verifyToken = async () => {
-  try {
-    // আপনার existing authApi use করুন
-    const response = await getProfile(token); // আপনার authApi থেকে
-    
-    if (response.data) {
-      const userData = response.data;
-      setUser(userData);
-    } else {
-      logout();
-    }
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    logout();
-  } finally {
-    setLoading(false);
-  }
-};
+        initializeAuth();
+    }, []);
 
-  const login = (userData, authToken) => {
-    setUser(userData);
-    setToken(authToken);
-    localStorage.setItem('accessToken', authToken);
-  };
+    const login = (userData, accessToken) => {
+        localStorage.setItem('accessToken', accessToken);
+        setToken(accessToken);
+        setUser(userData);
+        setIsAuthenticated(true);
+    };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('accessToken');
-    // Call logout API if needed
-  };
+    const logout = () => {
+        localStorage.removeItem('accessToken');
+        setToken(null);
+        setUser(null);
+        setIsAuthenticated(false);
+    };
 
-  const value = {
-    user,
-    token,
-    login,
-    logout,
-    loading,
-    isAuthenticated: !!user && !!token,
-    isAdmin: user?.role === 'admin',
-  };
+    const value = {
+        user,
+        token,
+        isAuthenticated,
+        loading,
+        login,
+        logout,
+        setUser
+    };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

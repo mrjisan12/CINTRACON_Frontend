@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from '../contexts/AuthContext';
 import { useMaintenance } from '../contexts/MaintenanceContext';
 import ScrollToTop from "../Ui/ScrollToTop";
@@ -12,25 +12,36 @@ export default function Client() {
     const navigate = useNavigate();
     const { isAuthenticated, loading } = useAuth();
     const { maintenance, showModal } = useMaintenance();
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     // Public routes that should redirect to home if authenticated
     const publicRoutes = ['/login', '/signup', '/admin-signup', '/send-otp', '/check-otp', '/reset-password'];
 
     useEffect(() => {
-        // Redirect authenticated users away from auth pages
-        if (!loading && isAuthenticated && publicRoutes.includes(location.pathname)) {
-            navigate('/home', { replace: true });
+        // Only run redirect logic if not already redirecting and auth check is complete
+        if (!loading && !isRedirecting) {
+            const isPublicRoute = publicRoutes.includes(location.pathname);
+            
+            if (isAuthenticated && isPublicRoute) {
+                setIsRedirecting(true);
+                navigate('/home', { replace: true });
+            }
         }
-    }, [location.pathname, isAuthenticated, loading, navigate]);
+    }, [location.pathname, isAuthenticated, loading, isRedirecting, navigate]);
 
-    // Maintenance check - redirect to home if maintenance is active and user is on auth pages
+    // Reset redirecting state when location changes
+    useEffect(() => {
+        setIsRedirecting(false);
+    }, [location.pathname]);
+
+    // Maintenance check
     useEffect(() => {
         if (maintenance.status && publicRoutes.includes(location.pathname)) {
-            // Already handled by MaintenanceModal and Login component
+            // Maintenance logic handled by MaintenanceModal
         }
     }, [maintenance.status, location.pathname]);
 
-    // (your existing reveal code)
+    // Your existing reveal code
     useEffect(() => {
         const obs = new IntersectionObserver(
             (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("show")),
@@ -53,7 +64,8 @@ export default function Client() {
         };
     }, [location.pathname]);
 
-    if (loading) {
+    // Show loading while checking auth or redirecting
+    if (loading || isRedirecting) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
