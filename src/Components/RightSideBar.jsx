@@ -12,6 +12,7 @@ const RightSideBar = () => {
         const res = await getRightSidebarInfo(token);
         if (res.data.success) {
           const users = res.data.data.top_users.map((user) => ({
+            id: user.id,
             name: user.full_name,
             dept: user.department.toUpperCase(),
             semester: user.semester,
@@ -30,7 +31,7 @@ const RightSideBar = () => {
 
   return (
     <aside
-      className="bg-[#20222B] rounded-2xl shadow-lg p-4 mb-6 flex flex-col gap-8 sticky top-20
+      className="bg-[#20222B] rounded-2xl shadow-lg p-2 mb-6 flex flex-col gap-8 sticky top-20
       min-h-[500px] w-full max-w-[340px] mx-auto overflow-y-auto scrollbar-thin scrollbar-thumb-[#3DDC97]/40 scrollbar-track-transparent hide-scrollbar"
       style={{ maxHeight: "calc(100vh - 100px)" }}
     >
@@ -70,9 +71,10 @@ const RightSideBar = () => {
             >
               {/* Avatar + Name + Dept */}
               <Link
-                to="/profile"
+                to={`/user-profile/${m.id}`}
                 className="flex items-center gap-3 flex-1 hover:text-sky-400 transition-colors min-w-0"
               >
+                <span className="font-bold">{idx+1}</span>
                 <img
                   src={m.avatar}
                   alt={m.name}
@@ -81,7 +83,7 @@ const RightSideBar = () => {
                 <div className="flex flex-col leading-tight min-w-0">
                   <span className="font-medium truncate">{m.name}</span>
                   <span className="text-xs text-gray-400">
-                    {m.dept} • {m.semester}
+                    {m.dept} • {m.semester} Semester
                   </span>
                 </div>
               </Link>

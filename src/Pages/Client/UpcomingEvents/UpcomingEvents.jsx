@@ -101,10 +101,10 @@ const EventsPage = () => {
         return
       }
 
-      const response = await getAllEvents({ page, size: 6 }, token)
+      const response = await getAllEvents({ page, size: 10 }, token)
       
       if (response.data.success) {
-        const eventsData = response.data.data.events || response.data.data
+        const eventsData = response.data.data
         
         if (append) {
           setEvents(prev => [...prev, ...eventsData])

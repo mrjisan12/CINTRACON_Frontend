@@ -146,7 +146,7 @@ const LeftSideBar = () => {
                     {developer.full_name}
                   </span>
                   <span className="text-gray-400 text-xs capitalize">
-                    {developer.department}
+                    {developer.department} • {developer.semester} Semester
                   </span>
                 </div>
               </li>
