@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   FaHeart,
   FaRegComment,
@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fa';
 import { getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
+import PostMenu from '../Home/PostMenu.jsx';
 
 const reactions = [
   { name: 'Like', icon: <FaThumbsUp className="text-blue-500" />, key: 'like' },
@@ -17,7 +18,7 @@ const reactions = [
   { name: 'Angry', icon: <FaAngry className="text-orange-600" />, key: 'angry' },
 ];
 
-const UserPosts = ({ profilePosts }) => {
+const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) => {
   const [posts, setPosts] = useState([]);
   const [userReactions, setUserReactions] = useState({});
   const [hoveredPost, setHoveredPost] = useState(null);
@@ -33,7 +34,10 @@ const UserPosts = ({ profilePosts }) => {
   const [profileInfo, setProfileInfo] = useState(null);
   
   const reactionTimeout = useRef();
+  const observer = useRef();
   const commentInputRef = useRef();
+
+  const currentUserID = localStorage.getItem("user_id");
 
   // Set posts when profilePosts prop changes
   useEffect(() => {
@@ -92,6 +96,37 @@ const UserPosts = ({ profilePosts }) => {
       setError('Failed to load post details.');
     }
     return null;
+  };
+
+  // Infinite scroll observer
+  const lastPostRef = useCallback(node => {
+    if (loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMorePosts) {
+        loadMorePosts();
+      }
+    });
+    
+    if (node) observer.current.observe(node);
+  }, [loadingMore, hasMorePosts, loadMorePosts]);
+
+  const handlePostUpdated = (updatedPost) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === updatedPost.id ? { ...post, ...updatedPost } : post
+      )
+    );
+  };
+
+  const handlePostDeleted = (deletedPostId) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== deletedPostId));
+  };
+
+  const handleReport = (postId, data) => {
+    console.log("Reported Post:", postId, data);
+    // 🔧 Send report data to backend
   };
 
   // Add reaction to post
@@ -415,9 +450,10 @@ const UserPosts = ({ profilePosts }) => {
         </div>
       )}
 
-      {posts.map((post) => (
+      {posts.map((post, index) => (
         <div
           key={post.id}
+          ref={index === posts.length - 1 ? lastPostRef : null}
           className="bg-[#20222B] rounded-2xl shadow p-6 flex flex-col gap-4 relative"
         >
           {/* Post Header */}
@@ -440,9 +476,14 @@ const UserPosts = ({ profilePosts }) => {
                 </div>
               </div>
             </div>
-            <button className="text-gray-400 hover:text-gray-200 text-xl font-bold">
-              &#8942;
-            </button>
+
+            <PostMenu
+              post={post}
+              currentUserId={currentUserID}
+              onPostUpdated={handlePostUpdated}
+              onPostDeleted={handlePostDeleted}
+              onReport={handleReport}
+            />
           </div>
 
           {/* Post Text */}
@@ -554,6 +595,20 @@ const UserPosts = ({ profilePosts }) => {
           </div>
         </div>
       ))}
+
+      {/* Loading Indicator */}
+      {loadingMore && (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {/* No More Posts */}
+      {!hasMorePosts && posts.length > 0 && (
+        <div className="text-center text-gray-400 py-8">
+          You've reached the end of posts
+        </div>
+      )}
 
       {/* 🖼️ Image Modal */}
       {imageModal.open && (

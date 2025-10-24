@@ -77,6 +77,25 @@ export const createPost = (formData, token) =>
     );
 
 
+// Update Post (Authenticated)
+export const updatePost = (postId, data, token) =>
+    api.post(`home/post/update/${postId}`, data, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+// Delete Post (Authenticated)
+export const deletePost = (postId, token) =>
+    api.delete(`home/post/delete/${postId}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+
+
 // Developers List (Authenticated)
 export const getDevelopers = (token) =>
     api.get("home/developers", {

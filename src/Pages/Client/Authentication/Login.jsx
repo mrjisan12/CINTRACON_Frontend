@@ -9,7 +9,7 @@ import MaintenanceModal from '../../../Components/MaintenanceModal';
 
 const Login = () => {
     const navigate = useNavigate();
-     const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated } = useAuth();
     const { maintenance, loading: maintenanceLoading } = useMaintenance();
     const location = useLocation();
     const [email, setEmail] = useState("");
@@ -46,11 +46,18 @@ const Login = () => {
             const response = await loginApi({ email, password });
             const { msg, success, data } = response.data;
 
+            
+
             if (success) {
                 toast.success(msg);
                 
                 // AuthContext will handle the rest including redirect
-                login(data.user, data.accessToken);
+                login(data, data.accessToken);
+
+                // console.log("Login successful, user ID:", data.id);
+                // console.log("Login successful, Token:", data.accessToken);
+
+                
                 
                 // Don't navigate here - let the useEffect above handle it
             } else {

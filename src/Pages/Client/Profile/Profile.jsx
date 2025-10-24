@@ -10,8 +10,11 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [postsPage, setPostsPage] = useState(1);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // Fetch profile data
+  // Fetch initial profile data
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -21,6 +24,7 @@ const Profile = () => {
           const response = await getProfileInfo(token, { page: 1, size: 10 });
           if (response.data.success) {
             setProfileData(response.data.data);
+            setHasMorePosts(response.data.data.posts?.length === 10);
           } else {
             setError("Failed to fetch profile data");
           }
@@ -35,6 +39,33 @@ const Profile = () => {
 
     fetchProfileData();
   }, []);
+
+  // Load more posts function
+  const loadMorePosts = async () => {
+    if (!hasMorePosts || loadingMore) return;
+
+    try {
+      setLoadingMore(true);
+      const token = localStorage.getItem("accessToken");
+      const nextPage = postsPage + 1;
+      
+      const response = await getProfileInfo(token, { page: nextPage, size: 10 });
+      if (response.data.success && response.data.data.posts?.length > 0) {
+        setProfileData(prev => ({
+          ...prev,
+          posts: [...prev.posts, ...response.data.data.posts]
+        }));
+        setPostsPage(nextPage);
+        setHasMorePosts(response.data.data.posts.length === 10);
+      } else {
+        setHasMorePosts(false);
+      }
+    } catch (err) {
+      console.error("Error loading more posts:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -69,7 +100,12 @@ const Profile = () => {
         </div>
         {/* Main Content */}
         <div className="flex-1 max-w-2xl mx-auto flex flex-col gap-6">
-          <UserPosts profilePosts={profileData.posts} />
+          <UserPosts 
+            profilePosts={profileData.posts} 
+            loadMorePosts={loadMorePosts}
+            hasMorePosts={hasMorePosts}
+            loadingMore={loadingMore}
+          />
         </div>
         {/* Right Sidebar */}
         <div className="hidden xl:block w-1/4">

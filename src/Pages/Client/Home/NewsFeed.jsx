@@ -10,6 +10,8 @@ import {
 import { getNewsfeedPosts, getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
 import { Link } from 'react-router-dom';
+import PostCaption from './PostCaption';
+import PostMenu from './PostMenu';
 
 const reactions = [
   { name: 'Like', icon: <FaThumbsUp className="text-blue-500" />, key: 'like' },
@@ -40,6 +42,9 @@ const NewsFeed = () => {
   const observer = useRef();
   const lastPostElementRef = useRef();
   const commentInputRef = useRef();
+
+  const currentUserID = localStorage.getItem("user_id");
+  // console.log("Current User ID in NewsFeed:", currentUserID);
 
   // Listen for post creation events
   useEffect(() => {
@@ -73,6 +78,31 @@ const NewsFeed = () => {
 
     fetchProfileInfo();
   }, []);
+
+
+
+
+  const handlePostUpdated = (updatedPost) => {
+  setPosts((prevPosts) =>
+    prevPosts.map((post) =>
+      post.id === updatedPost.id ? { ...post, ...updatedPost } : post
+    )
+  );
+};
+
+
+  const handlePostDeleted = (deletedPostId) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== deletedPostId));
+  };
+
+  const handleReport = (postId, data) => {
+    console.log("Reported Post:", postId, data);
+    // 🔧 Send report data to backend
+  };
+
+
+
+
 
   // Format time difference
   const formatTime = (createdAt) => {
@@ -512,15 +542,30 @@ const NewsFeed = () => {
                 </div>
               </div>
             </div>
-            <button className="text-gray-400 hover:text-gray-200 text-xl font-bold">
+
+             {/* Old Code */}
+            {/* <button className="text-gray-400 hover:text-gray-200 text-xl font-bold">
               &#8942;
-            </button>
+            </button> */}
+
+            {/* New Code */}
+            <PostMenu
+              post={post}
+              currentUserId={currentUserID}
+              onPostUpdated={handlePostUpdated}
+              onPostDeleted={handlePostDeleted}
+              onReport={handleReport}
+            />
+
           </div>
 
-          {/* Post Text */}
-          {post.caption && (
+          {/* Post Text old code */}
+          {/* {post.caption && (
             <div className="text-gray-100 text-lg">{post.caption}</div>
-          )}
+          )} */}
+
+           {/* New Code */}
+          {post.caption && <PostCaption caption={post.caption} />}
 
           {/* Post Image */}
           {post.post_image && (
@@ -644,19 +689,19 @@ const NewsFeed = () => {
       {/* 🖼️ Image Modal */}
       {imageModal.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
           onClick={() => setImageModal({ open: false, src: '' })}
         >
           <div
             className="relative max-w-5xl w-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
+            {/* <button
               className="absolute top-3 right-3 text-white text-3xl font-bold bg-black/40 rounded-full px-2"
               onClick={() => setImageModal({ open: false, src: '' })}
             >
               &times;
-            </button>
+            </button> */}
             <img
               src={imageModal.src}
               alt="fullscreen"

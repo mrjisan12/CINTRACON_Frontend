@@ -291,7 +291,7 @@ const Signup = () => {
                 required
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="you@example.com"
+                placeholder="your_id@uap-bd.edu"
                 className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300"
               />
             </div>
@@ -430,7 +430,7 @@ const Signup = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  placeholder="Confirm"
+                  placeholder="Confirm password"
                   className="w-full px-3 py-2 text-sm rounded-lg bg-slate-700/40 border border-white/10 text-white focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 transition-all duration-300 pr-8"
                 />
                 <button
@@ -514,7 +514,7 @@ const Signup = () => {
 
       {/* Terms and Conditions Modal */}
       {showTerms && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] rounded-2xl border border-white/10 shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-white/10 p-6">
