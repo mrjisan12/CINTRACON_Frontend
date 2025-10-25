@@ -212,8 +212,8 @@ const NoteSharing = () => {
     if (!showUploadModal) return null;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div className="relative w-full max-w-2xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-500/30">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm ">
+        <div className="relative w-full max-w-2xl bg-gradient-to-br from-[#1E2130] to-[#181820] rounded-3xl border-2 border-purple-500/50 shadow-2xl shadow-purple-500/30 ">
           
           {/* Modal Header */}
           <div className="relative p-6 border-b border-purple-500/30">
@@ -332,7 +332,7 @@ const NoteSharing = () => {
               </div>
 
               {/* File Upload */}
-              <div>
+              {/* <div>
                 <label className="block text-white font-semibold mb-2">Upload File</label>
                 <input
                   type="file"
@@ -341,7 +341,9 @@ const NoteSharing = () => {
                   className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-purple-600 file:to-pink-600 file:text-white hover:file:from-purple-500 hover:file:to-pink-700"
                 />
                 <p className="text-gray-400 text-sm mt-1">Upload a file OR provide a Google Drive link</p>
-              </div>
+              </div> */}
+
+
             </form>
           </div>
 
@@ -427,10 +429,42 @@ const NoteSharing = () => {
       }
     };
 
-    const handleDriveLink = () => {
-      if (expandedNote?.drive_link) {
+    const handleDriveLink = async () => {
+
+       if (!expandedNote) return;
+
+      try {
+        setIsDownloading(true);
+        const token = localStorage.getItem('accessToken');
+        
+        // Increase download count
+        await increaseDownloadCount(expandedNote.id, token);
+
+        if (expandedNote?.drive_link) {
         window.open(expandedNote.drive_link, '_blank');
       }
+        
+        // Update local state to reflect new download count
+        setExpandedNote(prev => ({
+          ...prev,
+          total_downloads: prev.total_downloads + 1
+        }));
+        
+        // Update the note in the list
+        setNotesData(prev => prev.map(note => 
+          note.id === expandedNote.id 
+            ? { ...note, total_downloads: note.total_downloads + 1 }
+            : note
+        ));
+
+        toast.success('1 Views Counted!');
+      } catch (error) {
+        console.error('Error Counting View:', error);
+        toast.error('Error Counting View');
+      } finally {
+        setIsDownloading(false);
+      }
+      
     };
 
     if (!expandedNote) return null;
@@ -502,15 +536,18 @@ const NoteSharing = () => {
             <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20 shadow-lg">
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-400">
-                  {expandedNote.total_downloads} Downloads
+                  {expandedNote.total_downloads} Views
                 </div>
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-purple-500/30 flex justify-between items-center">
-            {expandedNote.note_file && (
+          <div className="p-6 border-t border-purple-500/30 flex justify-end items-center">
+            
+            {/* Backup Code */}
+
+            {/* {expandedNote.note_file && (
               <button
                 onClick={handleDownload}
                 disabled={isDownloading}
@@ -519,22 +556,42 @@ const NoteSharing = () => {
                 {isDownloading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Downloading...
+                    Opening...
                   </>
                 ) : (
-                  'Download File'
+                  'Open Drive Link'
                 )}
               </button>
-            )}
+            )} */}
             
-            {expandedNote.drive_link && (
+            {/* {expandedNote.drive_link && (
               <button
                 onClick={handleDriveLink}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-violet-600 text-white font-bold rounded-xl hover:from-blue-400 hover:to-violet-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/25 border border-blue-500/30"
+                className="px-6 py-3 bg-gradient-to-r  from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-blue-400 hover:to-violet-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-blue-500/25 border border-blue-500/30"
               >
                 Open Drive Link
               </button>
+            )} */}
+
+
+            {expandedNote.drive_link && (
+              <button
+                onClick={handleDriveLink}
+                disabled={isDownloading}
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-xl hover:from-green-400 hover:to-emerald-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-green-500/25 border border-green-500/30 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDownloading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Opening...
+                  </>
+                ) : (
+                  'Open Drive Link'
+                )}
+              </button>
             )}
+
+
           </div>
         </div>
       </div>
@@ -721,7 +778,7 @@ const NoteSharing = () => {
 
                       {/* Stats */}
                       <div className="bg-white/5 rounded-lg p-3 mb-4 border-l-4" style={{ borderColor: borderColor }}>
-                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Downloads</p>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Views</p>
                         <p className="text-2xl font-bold text-white">{note.total_downloads}</p>
                       </div>
 

@@ -71,7 +71,7 @@ const ProfileHeader = ({ profileData }) => {
       {isModalOpen && (
         <div
           onClick={() => setIsModalOpen(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
         >
           <div
             onClick={(e) => e.stopPropagation()} // prevent close when clicking on image
@@ -80,7 +80,7 @@ const ProfileHeader = ({ profileData }) => {
             <img
               src={modalImage}
               alt="Full View"
-              className="w-full h-auto rounded-2xl object-contain shadow-lg"
+              className="w-full h-full rounded-2xl object-cover shadow-lg"
             />
           </div>
         </div>

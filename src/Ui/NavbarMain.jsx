@@ -5,44 +5,76 @@ import { FaSearch, FaBars, FaBell } from 'react-icons/fa';
 import { logout } from '../api/authApi';
 import { getNavbarInfo } from '../api/homeApi';
 import { toast } from 'react-toastify';
-import { useEffect } from 'react';
-
-
-const user = {
-  name: 'Miznur Rahman Jisan',
-  avatar: 'jisan.jpg',
-};
+import { useState, useRef, useEffect } from 'react';
+import { getAllStudentsInfo } from '../api/allStudentsApi';
 
 const NavbarMain = () => {
   const navigate = useNavigate();
-  const [dropdown, setDropdown] = React.useState(false);
-  const [notificationOpen, setNotificationOpen] = React.useState(false);
-  const [mobileMenu, setMobileMenu] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [showSearchDropdown, setShowSearchDropdown] = React.useState(false);
-  const dropdownRef = React.useRef(null);
-  const notificationRef = React.useRef(null);
-  const mobileMenuRef = React.useRef(null);
-  const [navbarInfo, setNavbarInfo] = React.useState(null);
+  const [dropdown, setDropdown] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [navbarInfo, setNavbarInfo] = useState(null);
+  
+  const dropdownRef = useRef(null);
+  const notificationRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
-  // Example user data for demo (replace with real data or API)
-  const users = [
-    { id: 1, name: 'Mizanur Rahman Jisan', avatar: '/jisan.jpg', department: 'CSE', semester: '3.2' },
-    { id: 2, name: 'Shahid Al Mamin', avatar: '/mamim.jpg', department: 'EEE', semester: '2.1' },
-    { id: 3, name: 'Lamia Akter Jesmin', avatar: '/jesmin.jpeg', department: 'BBA', semester: '1.2' },
-    { id: 4, name: 'Nashrah Zakir Nawmi', avatar: '/nawmi.jpg', department: 'CSE', semester: '3.1' },
-    { id: 5, name: 'Alif Mahmud Talha', avatar: '/alif.jpg', department: 'CSE', semester: '2.2' },
-    // ...more users
-  ];
+  // Debounced search function
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounced search
+    if (query.length > 0) {
+      setIsSearching(true);
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(query);
+      }, 300); // 300ms debounce delay
+    } else {
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  };
 
-  const searchResults =
-    searchQuery.trim() === ''
-      ? users.slice(0, 5) // Show first 5 users as "history" when input is empty
-      : users.filter(u =>
-          u.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 5);
+  // API call for search
+  const performSearch = async (query) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const response = await getAllStudentsInfo(token, {
+          search: query,
+          page: 1,
+          size: 10
+        });
 
-  React.useEffect(() => {
+        // console.log('Search API Response:', response);
+        
+        if (response.data && response.data.success) {
+          setSearchResults(response.data.data);
+        } else {
+          setSearchResults([]);
+        }
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdown(false);
@@ -53,18 +85,30 @@ const NavbarMain = () => {
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
         setMobileMenu(false);
       }
+      // Close search dropdown when clicking outside
+      if (showSearchDropdown && !event.target.closest('.relative.w-full.max-w-md')) {
+        setShowSearchDropdown(false);
+      }
     }
-    if (dropdown || notificationOpen || mobileMenu) {
+    
+    if (dropdown || notificationOpen || mobileMenu || showSearchDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [dropdown, notificationOpen, mobileMenu]);
+  }, [dropdown, notificationOpen, mobileMenu, showSearchDropdown]);
 
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  // Navbar info 
-    // Fetch Navbar Info
+  // Fetch Navbar Info
   useEffect(() => {
     const fetchNavbarInfo = async () => {
       try {
@@ -84,30 +128,23 @@ const NavbarMain = () => {
     fetchNavbarInfo();
   }, []);
 
-
-
-
-
   // Logout function  
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem("accessToken");
-      // console.log("Logging out with token:", token);
       if (token) {
-        await logout(token); // Call logout API
+        await logout(token);
         localStorage.removeItem("accessToken"); 
         toast.success("Logged out successfully");
-        navigate("/"); // Redirect to home
+        navigate("/");
       }
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
-
-
   return (
-  <nav className="sticky top-0 z-30 bg-[#181820] shadow flex items-center justify-between px-3 sm:px-6 md:px-12 h-16 border-b border-[#232A36] ">
+    <nav className="sticky top-0 z-30 bg-[#181820] shadow flex items-center justify-between px-3 sm:px-6 md:px-12 h-16 border-b border-[#232A36]">
       {/* Left: Logo and Name */}
       <div
         className="flex items-center gap-2 min-w-[120px] mx-4 md:mx-12 cursor-pointer"
@@ -117,54 +154,69 @@ const NavbarMain = () => {
         <img src="/logo.png" alt="Cintracon Logo" className="h-9 w-9 object-contain" />
         <span className="font-bold text-lg sm:text-xl md:text-2xl text-white tracking-wide">CINTRACON</span>
       </div>
+
       {/* Center: Search Bar (hidden on mobile) */}
       <div className="hidden md:flex flex-1 justify-center relative">
-  <div className="relative w-full max-w-md">
-    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-      <FaSearch />
-    </span>
-    <input
-      type="text"
-      placeholder="Search CINTRACON"
-      className="w-full pl-10 pr-4 py-2 rounded-full bg-[#1E2939] text-white border-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
-      value={searchQuery}
-      onChange={e => setSearchQuery(e.target.value)}
-      onFocus={() => setShowSearchDropdown(true)}
-      onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
-    />
-    {/* Search Suggestion Dropdown */}
-    {showSearchDropdown && (
-      <div className="absolute left-0 top-12 w-full bg-[#232A36] rounded-xl shadow-lg border border-[#232A36] z-50 animate-fade-in">
-        {searchResults.length > 0 ? (
-          <ul>
-            {searchResults.map((user, idx) => (
-              <li
-                key={user.id}
-                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#20222B] cursor-pointer transition"
-                onMouseDown={() => {
-                  navigate(`/profile`);
-                  setShowSearchDropdown(false);
-                  setSearchQuery('');
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <img src={user.avatar} alt={user.name} className="h-9 w-9 rounded-full object-cover border-2 border-blue-500" />
-                  <span className="text-white font-medium">{user.name}</span>
+        <div className="relative w-full max-w-md">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <FaSearch />
+          </span>
+          <input
+            type="text"
+            placeholder="Search CINTRACON"
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-[#1E2939] text-white border-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onFocus={() => setShowSearchDropdown(true)}
+            onBlur={() => setTimeout(() => setShowSearchDropdown(false), 150)}
+          />
+          {/* Search Suggestion Dropdown */}
+          {showSearchDropdown && (
+            <div className="absolute left-0 top-12 w-full bg-[#232A36] rounded-xl shadow-lg border border-[#232A36] z-50 animate-fade-in max-h-80 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                <ul>
+                  {searchResults.map((user, idx) => (
+                    <li
+                      key={user.id}
+                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#20222B] cursor-pointer transition"
+                      onMouseDown={() => {
+                        navigate(`/user-profile/${user.id}`);
+                        setShowSearchDropdown(false);
+                        setSearchQuery('');
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={user.profile_photo || '/default-avatar.png'} 
+                          alt={user.full_name} 
+                          className="h-9 w-9 rounded-full object-cover border-2 border-blue-500" 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium">{user.full_name}</span>
+                          <span className="text-xs text-gray-400">Batch - {user.batch_no}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs text-blue-400 capitalize">{user.department}</span>
+                        <span className="text-xs text-gray-400">{user.semester} Semester</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : searchQuery.length > 0 && isSearching ? (
+                <div className="px-4 py-3 text-gray-400 text-sm flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                  Searching...
                 </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-xs text-blue-400">{user.department}</span>
-                  <span className="text-xs text-gray-400">{user.semester} Semester</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="px-4 py-3 text-gray-400 text-sm">No users found.</div>
-        )}
+              ) : searchQuery.length > 0 ? (
+                <div className="px-4 py-3 text-gray-400 text-sm">No users found.</div>
+              ) : (
+                <div className="px-4 py-3 text-gray-400 text-sm">Start typing to search users...</div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-</div>
 
       {/* Notification Bell with Dropdown */}
       <div className="relative" ref={notificationRef}>
@@ -227,12 +279,11 @@ const NavbarMain = () => {
         <div className="flex items-center gap-3 bg-[#1E2939] px-3 py-1.5 rounded-full">
           <img src="/diamond.png" alt="Diamond" className="h-6 w-6 object-contain" />
           <span className="text-white font-semibold text-lg">{navbarInfo?.points ?? 0}</span>
-          
         </div>
         <div className="flex items-center gap-2 cursor-pointer relative" ref={dropdownRef}>
           <span className="text-white font-medium order-1 md:order-none">{navbarInfo?.full_name ?? 'N/A'}</span>
           <img
-            src={navbarInfo?.profile_photo ?? 'jisan.jpg'}
+            src={navbarInfo?.profile_photo || '/default-avatar.png'}
             alt="User Avatar"
             className="h-10 w-10 rounded-full border-2 border-blue-500 object-cover order-2 md:order-none"
             onClick={() => setDropdown((d) => !d)}
@@ -251,6 +302,7 @@ const NavbarMain = () => {
           )}
         </div>
       </div>
+
       {/* Mobile: Hamburger */}
       <div className="md:hidden flex items-center">
         <button onClick={() => setMobileMenu((m) => !m)} className="text-gray-200 text-2xl p-2 focus:outline-none">
@@ -270,13 +322,18 @@ const NavbarMain = () => {
             <div className="flex items-center gap-2 px-4 py-2">
               <span className="text-white font-medium">{navbarInfo?.full_name ?? 'N/A'}</span>
               <img
-                src={navbarInfo?.profile_photo ?? 'jisan.jpg'}
+                src={navbarInfo?.profile_photo || '/default-avatar.png'}
                 alt="User Avatar"
                 className="h-10 w-10 rounded-full border-2 border-blue-500 object-cover"
               />
             </div>
             <button className="w-full text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]">Settings</button>
-            <Link to="/" className="w-full block text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]">Logout</Link>
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-2 text-gray-200 hover:bg-[#181D27]"
+            >
+              Logout
+            </button>
             <div className="px-4 pt-2">
               <div className="relative w-full">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><FaSearch /></span>
@@ -284,6 +341,8 @@ const NavbarMain = () => {
                   type="text"
                   placeholder="Search CINTRACON"
                   className="w-full pl-10 pr-4 py-2 rounded-full bg-[#181D27] text-white border-none focus:ring-2 focus:ring-blue-400 placeholder-gray-400"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>

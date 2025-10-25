@@ -6,13 +6,14 @@ import {
   FaThumbsUp,
   FaSadTear,
   FaAngry,
+  FaLaughSquint,
 } from 'react-icons/fa';
 import { getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
 import PostMenu from '../Home/PostMenu.jsx';
 
 const reactions = [
-  { name: 'Like', icon: <FaThumbsUp className="text-blue-500" />, key: 'like' },
+  { name: 'Haha', icon: <FaLaughSquint className="text-yellow-500" />, key: 'haha' },
   { name: 'Love', icon: <FaHeart className="text-red-500" />, key: 'love' },
   { name: 'Sad', icon: <FaSadTear className="text-yellow-400" />, key: 'sad' },
   { name: 'Angry', icon: <FaAngry className="text-orange-600" />, key: 'angry' },
@@ -430,7 +431,7 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
     if (userReaction) {
       return reactions.find(r => r.key === userReaction);
     }
-    return { name: 'Like', icon: <FaThumbsUp className="text-gray-300" /> };
+    return { name: 'Love', icon: <FaHeart className="text-red-500" /> };
   };
 
   // No posts state

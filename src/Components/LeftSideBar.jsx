@@ -9,10 +9,10 @@ const menu = [
   { icon: <FaUsers />, label: 'All Students', to: '/all-students' },
   { icon: <FaBook />, label: 'Note Sharing', to: '/note-sharing' },
   { icon: <FaBriefcase />, label: 'Job Opportunities', to: '/jobs' },
-  { icon: <FaCalendarAlt />, label: 'Forum', to: '/forum' },
+  // { icon: <FaCalendarAlt />, label: 'Forum', to: '/forum' },
   { icon: <FaComments />, label: 'Upcoming Event', to: '/upcoming-events' },
   { icon: <FaBullhorn />, label: 'Announcement', to: '/announcement' },
-  { icon: <FaProjectDiagram />, label: 'CINTRACON AI', to: '/cintracon-ai' },
+  // { icon: <FaProjectDiagram />, label: 'CINTRACON AI', to: '/cintracon-ai' },
 ];
 
 const LeftSideBar = () => {
@@ -115,7 +115,7 @@ const LeftSideBar = () => {
       </nav>
 
       {/* Developers Section */}
-      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-2 mb-10">
+      <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-2">
         <div className="text-gray-200 text-sm mb-3 font-semibold flex items-center gap-2">
           <FaUsers className="text-blue-400" />
           Developers of CINTRACON
@@ -158,6 +158,41 @@ const LeftSideBar = () => {
           </div>
         )}
       </div>
+
+
+      {/* When need then comment out */}
+      {/* Support Us Section */}
+      
+      {/* <div className="mt-2 bg-[#23242C] rounded-xl px-2 py-2 mb-10">
+        <div className="text-white text-lg mb-4 font-bold flex items-center gap-2">
+          Support CINTRACON
+        </div>
+        
+        <div className="space-y-4">
+          <p className="text-gray-200 text-sm leading-relaxed">
+            We're building <span className="text-white font-semibold">CINTRACON</span> to make your campus life smarter
+            less effort, more connection, and better study focus. 💡
+          </p>
+          
+          <p className="text-gray-200 text-sm leading-relaxed">
+            Support our hard work by helping us maintain the servers that keep CINTRACON free for every student.
+            Your small contribution means a lot. ❤️
+          </p>
+
+          <p className="text-gray-200 text-sm leading-relaxed">
+            <img src="/images/bkash_.png" alt="Bkash Logo" className="inline h-6 mr-2" />Bkash - <span className='font-bold text-2xl'>01923777130</span>
+          </p>
+          
+          <div className="text-center mt-4">
+            <p className="text-gray-300 text-xs">
+              Together, let's build a better campus experience for everyone! 🚀
+            </p>
+          </div>
+        </div>
+      </div> */}
+
+
+
     </aside>
   );
 };

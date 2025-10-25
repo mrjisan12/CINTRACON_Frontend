@@ -6,6 +6,7 @@ import {
   FaThumbsUp,
   FaSadTear,
   FaAngry,
+  FaLaughSquint,
 } from 'react-icons/fa';
 import { getNewsfeedPosts, getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
@@ -14,7 +15,7 @@ import PostCaption from './PostCaption';
 import PostMenu from './PostMenu';
 
 const reactions = [
-  { name: 'Like', icon: <FaThumbsUp className="text-blue-500" />, key: 'like' },
+  { name: 'Haha', icon: <FaLaughSquint className="text-yellow-500" />, key: 'haha' },
   { name: 'Love', icon: <FaHeart className="text-red-500" />, key: 'love' },
   { name: 'Sad', icon: <FaSadTear className="text-yellow-400" />, key: 'sad' },
   { name: 'Angry', icon: <FaAngry className="text-orange-600" />, key: 'angry' },
@@ -96,7 +97,7 @@ const NewsFeed = () => {
   };
 
   const handleReport = (postId, data) => {
-    console.log("Reported Post:", postId, data);
+    // console.log("Reported Post:", postId, data);
     // 🔧 Send report data to backend
   };
 
@@ -502,7 +503,7 @@ const NewsFeed = () => {
     if (userReaction) {
       return reactions.find(r => r.key === userReaction);
     }
-    return { name: 'Like', icon: <FaThumbsUp className="text-gray-300" /> };
+    return { name: 'Love', icon: <FaHeart className="text-red-500" /> };
   };
 
   return (
@@ -619,7 +620,7 @@ const NewsFeed = () => {
                     if (userReaction) {
                       handleRemoveReaction(post.id);
                     } else {
-                      handleAddReaction(post.id, 'like');
+                      handleAddReaction(post.id, 'love');
                     }
                   }}
                 >

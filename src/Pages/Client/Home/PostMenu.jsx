@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { updatePost, deletePost } from "../../../api/homeApi";
+import { reportPost } from "../../../api/reportApi"; // নতুন API import
 import { toast } from "react-toastify";
 
 const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport }) => {
@@ -11,15 +12,83 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
   const [reportType, setReportType] = useState("");
   const [reportReason, setReportReason] = useState("");
   const [editedCaption, setEditedCaption] = useState(post.caption || "");
+  const [isReporting, setIsReporting] = useState(false);
 
   const token = localStorage.getItem("accessToken");
   const isOwnPost = post.user.id === Number(currentUserId);
 
-  const handleReportSubmit = () => {
-    onReport({ type: reportType, reason: reportReason });
-    setShowReportModal(false);
-    setReportType("");
-    setReportReason("");
+  const handleReportSubmit = async () => {
+    if (!reportType || !reportReason.trim()) {
+      toast.error("Please select report type and provide reason");
+      return;
+    }
+
+    setIsReporting(true);
+    try {
+      const response = await reportPost(
+        post.id,
+        {
+          report_type: reportType,
+          reason: reportReason.trim()
+        },
+        token
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.msg || "Post reported successfully");
+        if (onReport) {
+          onReport({ type: reportType, reason: reportReason });
+        }
+        setShowReportModal(false);
+        setReportType("");
+        setReportReason("");
+      } else {
+        toast.error(response.data.msg || "Failed to report post");
+      }
+    } catch (error) {
+      // console.error("Report error:", error);
+      
+      // Better error handling
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        
+        // যদি specific error message থাকে
+        if (errorData.msg) {
+          toast.error(errorData.msg);
+        } 
+        // যদি serializer errors থাকে
+        else if (errorData.data) {
+          const errorMessages = [];
+          
+          // সব errors collect করছি
+          Object.values(errorData.data).forEach(errors => {
+            if (Array.isArray(errors)) {
+              errorMessages.push(...errors);
+            } else {
+              errorMessages.push(errors);
+            }
+          });
+          
+          if (errorMessages.length > 0) {
+            toast.error(errorMessages[0]); // প্রথম error message show করছি
+          } else {
+            toast.error("Invalid data provided");
+          }
+        } else {
+          toast.error("Error reporting post");
+        }
+        
+        // যদি user ইতিমধ্যে report করে থাকে
+        if (errorData.msg?.includes("already reported") || 
+            errorData.msg?.includes("cannot report your own post")) {
+          setShowReportModal(false);
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -113,10 +182,11 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 mb-3"
             >
               <option value="">Select type</option>
-              <option value="Spam">Spam</option>
-              <option value="Harassment">Harassment</option>
-              <option value="Misinformation">Misinformation</option>
-              <option value="Inappropriate Content">Inappropriate Content</option>
+              <option value="spam">Spam</option>
+              <option value="harassment">Harassment</option>
+              <option value="misinformation">Misinformation</option>
+              <option value="inappropriate_content">Inappropriate Content</option>
+              <option value="other">Other</option>
             </select>
 
             <label className="block mb-2">Reason</label>
@@ -131,14 +201,16 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
               <button
                 onClick={() => setShowReportModal(false)}
                 className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600"
+                disabled={isReporting}
               >
                 Cancel
               </button>
               <button
                 onClick={handleReportSubmit}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500"
+                disabled={isReporting || !reportType || !reportReason.trim()}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 disabled:cursor-not-allowed"
               >
-                Submit
+                {isReporting ? "Reporting..." : "Submit"}
               </button>
             </div>
           </div>
