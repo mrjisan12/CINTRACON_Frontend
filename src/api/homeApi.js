@@ -1,105 +1,44 @@
 import api from "./axios";
 
+export const getNavbarInfo = () =>
+    api.get("home/navbar-info");
 
+export const getRightSidebarInfo = () =>
+    api.get("home/right-sidebar-info");
 
+export const getNewsfeedPosts = (page = 1, size = 10) =>
+    api.post("home/newsfeed", { page, size });
 
-// Navbar Info (Authenticated)
-export const getNavbarInfo = (token) =>
-    api.get("home/navbar-info", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+export const getPostDetails = (postId) =>
+    api.get(`home/post/details/${postId}`);
+
+export const addReaction = (postId, reactionType) =>
+    api.post(`home/post/reaction/${postId}`, { reaction_type: reactionType });
+
+export const addComment = (postId, content) =>
+    api.post(`home/post/comment/${postId}`, { content });
+
+export const createPost = (formData) =>
+    api.post("home/post/create", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-// Right Sidebar Info (Authenticated)
-export const getRightSidebarInfo = (token) =>
-    api.get("home/right-sidebar-info", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+export const updatePost = (postId, data) =>
+    api.post(`home/post/update/${postId}`, data);
 
+export const deletePost = (postId) =>
+    api.delete(`home/post/delete/${postId}`);
 
-// Newsfeed Posts (Authenticated)
-export const getNewsfeedPosts = (page = 1, size = 10, token) =>
-    api.post("home/newsfeed",
-        { page, size }, // Request body
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
+export const getDevelopers = () =>
+    api.get("home/developers");
 
-// Post Details (Authenticated - if needed)
-export const getPostDetails = (postId, token) =>
-    api.get(`home/post/details/${postId}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+// Bookmark (toggle)
+export const bookmarkPost = (postId) =>
+    api.post(`home/post/bookmark/${postId}`);
 
+export const getMyBookmarks = (page = 1, size = 10) =>
+    api.get(`home/my-bookmarks?page=${page}&size=${size}`);
 
-// Add Reaction to Post (Authenticated)
-export const addReaction = (postId, reactionType, token) =>
-    api.post(`home/post/reaction/${postId}`,
-        { reaction_type: reactionType },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-
-
-// Add Comment to Post (Authenticated)
-export const addComment = (postId, content, token) =>
-    api.post(`home/post/comment/${postId}`,
-        { content },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
-    );
-
-
-// Create New Post (Authenticated)
-export const createPost = (formData, token) =>
-    api.post("home/post/create",
-        formData,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data',
-            },
-        }
-    );
-
-
-// Update Post (Authenticated)
-export const updatePost = (postId, data, token) =>
-    api.post(`home/post/update/${postId}`, data, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-    });
-
-// Delete Post (Authenticated)
-export const deletePost = (postId, token) =>
-    api.delete(`home/post/delete/${postId}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-
-
-
-// Developers List (Authenticated)
-export const getDevelopers = (token) =>
-    api.get("home/developers", {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+// Global search
+export const globalSearch = (query, type = 'all') =>
+    api.get(`home/search?q=${encodeURIComponent(query)}&type=${type}`);

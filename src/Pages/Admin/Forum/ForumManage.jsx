@@ -1,303 +1,123 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from "react";
+import { FaSearch, FaThumbtack, FaTrash } from "react-icons/fa";
+import { getAdminForum, deleteAdminForumTopic, pinAdminForumTopic } from "../../../api/adminApi";
+import { toast } from "react-toastify";
+
+const SIZE = 10;
 
 const ForumManage = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedForum, setSelectedForum] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, total_pages: 1 });
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // Sample forum data
-  const [forums, setForums] = useState([
-    {
-      id: 1,
-      title: "Data Structures Discussion",
-      description: "Discuss algorithms, data structures, and problem solving techniques",
-      category: "CSE",
-      author: "John Doe",
-      posts: 145,
-      views: 2890,
-      lastActivity: "2024-01-15",
-      status: "active",
-      isPinned: true
-    },
-    {
-      id: 2,
-      title: "Web Development Trends 2024",
-      description: "Latest frameworks, tools and best practices in web development",
-      category: "CSE",
-      author: "Jane Smith",
-      posts: 89,
-      views: 1567,
-      lastActivity: "2024-01-12",
-      status: "active",
-      isPinned: false
-    },
-    {
-      id: 3,
-      title: "Career Guidance for Fresh Graduates",
-      description: "Job search tips, interview preparation and career advice",
-      category: "Career",
-      author: "Mike Johnson",
-      posts: 167,
-      views: 4231,
-      lastActivity: "2024-01-10",
-      status: "active",
-      isPinned: true
-    },
-    {
-      id: 4,
-      title: "Machine Learning Projects",
-      description: "Share your ML projects and get feedback from the community",
-      category: "CSE",
-      author: "Sarah Wilson",
-      posts: 203,
-      views: 5123,
-      lastActivity: "2024-01-08",
-      status: "active",
-      isPinned: false
-    },
-    {
-      id: 5,
-      title: "Campus Events and Activities",
-      description: "Upcoming events, workshops and student activities",
-      category: "Campus",
-      author: "Alex Brown",
-      posts: 98,
-      views: 2345,
-      lastActivity: "2024-01-05",
-      status: "archived",
-      isPinned: false
-    },
-    {
-      id: 6,
-      title: "Study Group Coordination",
-      description: "Organize study groups and collaborative learning sessions",
-      category: "Academic",
-      author: "David Lee",
-      posts: 234,
-      views: 6789,
-      lastActivity: "2024-01-03",
-      status: "active",
-      isPinned: false
-    }
-  ])
+  const fetchTopics = useCallback(() => {
+    setLoading(true);
+    getAdminForum({ search, page, size: SIZE })
+      .then(res => {
+        if (res.data.success) {
+          setTopics(res.data.data);
+          setPagination(res.data.pagination || { total: 0, total_pages: 1 });
+        }
+      })
+      .catch(() => toast.error("Failed to load posts"))
+      .finally(() => setLoading(false));
+  }, [search, page]);
 
-  const filteredForums = forums.filter(forum => {
-    const matchesSearch = forum.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         forum.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         forum.id.toString().includes(searchTerm)
-    const matchesCategory = categoryFilter === 'all' || forum.category === categoryFilter
-    const matchesStatus = statusFilter === 'all' || forum.status === statusFilter
-    
-    return matchesSearch && matchesCategory && matchesStatus
-  })
+  useEffect(() => { fetchTopics(); }, [fetchTopics]);
+  useEffect(() => { setPage(1); }, [search]);
 
-  const categories = ['all', 'CSE', 'Career', 'Campus', 'Academic', 'General']
-  const statuses = ['all', 'active', 'archived']
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
-
-  const clearFilters = () => {
-    setSearchTerm('')
-    setCategoryFilter('all')
-    setStatusFilter('all')
-  }
-
-  const handleDelete = (forum) => {
-    setSelectedForum(forum)
-    setShowDeleteModal(true)
-  }
-
-  const confirmDelete = async () => {
-    setIsSubmitting(true)
+  const handlePin = async (id, isPinned) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      setForums(forums.filter(forum => forum.id !== selectedForum.id))
-      alert('Forum deleted successfully!')
-      setShowDeleteModal(false)
-      setSelectedForum(null)
-    } catch (error) {
-      console.error('Error deleting forum:', error)
-      alert('Error deleting forum. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+      const res = await pinAdminForumTopic(id);
+      if (res.data.success) {
+        toast.success(res.data.msg || (isPinned ? "Unpinned" : "Pinned"));
+        setTopics(prev => prev.map(t =>
+          t.id === id ? { ...t, is_pinned: res.data.data?.is_pinned ?? !isPinned } : t
+        ));
+      }
+    } catch { toast.error("Failed to update pin"); }
+  };
 
-  const togglePin = (forumId) => {
-    setForums(forums.map(forum => 
-      forum.id === forumId 
-        ? { ...forum, isPinned: !forum.isPinned }
-        : forum
-    ))
-  }
-
-  const toggleStatus = (forumId) => {
-    setForums(forums.map(forum => 
-      forum.id === forumId 
-        ? { ...forum, status: forum.status === 'active' ? 'archived' : 'active' }
-        : forum
-    ))
-  }
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await deleteAdminForumTopic(deleteId);
+      if (res.data.success) {
+        toast.success("Post deleted");
+        setTopics(prev => prev.filter(t => t.id !== deleteId));
+        setDeleteId(null);
+      }
+    } catch { toast.error("Failed to delete post"); }
+    finally { setDeleting(false); }
+  };
 
   return (
-    <div className="min-h-screen bg-[#181820] p-6">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Forum Management</h1>
-        <p className="text-gray-400">Manage and monitor all forum discussions</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Forum & Posts</h1>
+        <p className="text-gray-400 text-sm mt-1">Manage all posts and discussions</p>
       </div>
 
-      {/* Filters Section */}
-      <div className="bg-[#1E2130] rounded-2xl p-6 border border-[#2A2D3A] mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          
-          {/* Search Bar */}
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search by ID, title or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-            />
-          </div>
-
-          {/* Category Filter */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category === 'all' ? 'All Categories' : category}
-              </option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {statuses.map(status => (
-              <option key={status} value={status}>
-                {status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </select>
-
-          {/* Reset Button */}
-          <button
-            onClick={clearFilters}
-            className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-500 hover:to-gray-600 transition-all duration-200 border border-gray-500/30 shadow-lg"
-          >
-            Reset
-          </button>
+      <div className="flex gap-3">
+        <div className="relative">
+          <FaSearch className="absolute left-3 top-2.5 text-gray-500 text-xs" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search posts..."
+            className="pl-9 pr-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500 w-64" />
         </div>
       </div>
 
-      {/* Forums Table */}
-      <div className="bg-[#1E2130] rounded-2xl border border-[#2A2D3A] overflow-hidden">
+      <div className="bg-[#181a20] border border-[#232A36] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#2A2D3A] border-b border-[#3A3D4A]">
-                <th className="px-6 py-4 text-left text-white font-semibold">ID</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Forum Details</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Category</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Author</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Posts</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Views</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Last Activity</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Status</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Actions</th>
+          <table className="w-full min-w-[650px]">
+            <thead className="bg-[#13151a] border-b border-[#232A36]">
+              <tr>
+                {["Post", "Author", "Date", "Replies", "Status", "Actions"].map(h => (
+                  <th key={h} className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider px-4 py-3">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody>
-              {filteredForums.map((forum) => (
-                <tr 
-                  key={forum.id} 
-                  className="border-b border-[#3A3D4A] hover:bg-[#2A2D3A] transition-colors"
-                >
-                  {/* ID - Shudhu number rakchi, pin icon bad diyechi */}
-                  <td className="px-6 py-4">
-                    <div className="text-purple-400 font-bold">{forum.id}</div>
-                  </td>
-                  
-                  {/* Forum Details */}
-                  <td className="px-6 py-4">
-                    <div className="text-white font-medium">
-                      {forum.title}
-                    </div>
-                    <div className="text-gray-400 text-sm mt-1 line-clamp-1">
-                      {forum.description}
+            <tbody className="divide-y divide-[#232A36]">
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>{[...Array(6)].map((__, j) => (
+                    <td key={j} className="px-4 py-3"><div className="h-4 bg-[#232A36] rounded animate-pulse" /></td>
+                  ))}</tr>
+                ))
+              ) : topics.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500">No posts found</td></tr>
+              ) : topics.map(t => (
+                <tr key={t.id} className="hover:bg-[#1e2028] transition-colors">
+                  <td className="px-4 py-3 max-w-xs">
+                    <div className="flex items-center gap-2">
+                      {t.is_pinned && <FaThumbtack className="text-yellow-400 text-xs flex-shrink-0" />}
+                      <span className="text-white text-sm truncate">{t.title}</span>
                     </div>
                   </td>
-                  
-                  {/* Category */}
-                  <td className="px-6 py-4">
-                    <span className="text-white">{forum.category}</span>
+                  <td className="px-4 py-3 text-gray-300 text-sm whitespace-nowrap">{t.author}</td>
+                  <td className="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">
+                    {t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}
                   </td>
-                  
-                  {/* Author */}
-                  <td className="px-6 py-4 text-white">{forum.author}</td>
-                  
-                  {/* Posts */}
-                  <td className="px-6 py-4 text-white">{forum.posts}</td>
-                  
-                  {/* Views */}
-                  <td className="px-6 py-4 text-white">{forum.views}</td>
-                  
-                  {/* Last Activity */}
-                  <td className="px-6 py-4 text-gray-400">{formatDate(forum.lastActivity)}</td>
-                  
-                  {/* Status */}
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
-                      forum.status === 'active' 
-                        ? "bg-green-500/20 text-green-400 border-green-500/30"
-                        : "bg-gray-500/20 text-gray-400 border-gray-500/30"
-                    }`}>
-                      {forum.status.charAt(0).toUpperCase() + forum.status.slice(1)}
+                  <td className="px-4 py-3 text-gray-300 text-sm">{t.replies_count ?? 0}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.is_active !== false ? "bg-green-500/15 text-green-400" : "bg-gray-500/15 text-gray-400"}`}>
+                      {t.is_active !== false ? "Active" : "Archived"}
                     </span>
                   </td>
-                  
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => togglePin(forum.id)}
-                        className={`px-3 py-1 text-white text-xs rounded-lg transition-colors ${
-                          forum.isPinned 
-                            ? "bg-yellow-600 hover:bg-yellow-700" 
-                            : "bg-gray-600 hover:bg-gray-700"
-                        }`}
-                      >
-                        {forum.isPinned ? 'Unpin' : 'Pin'}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handlePin(t.id, t.is_pinned)}
+                        title={t.is_pinned ? "Unpin" : "Pin"}
+                        className={`p-1.5 rounded transition text-sm ${t.is_pinned ? "bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25" : "bg-[#232A36] text-gray-500 hover:text-yellow-400"}`}>
+                        <FaThumbtack />
                       </button>
-                      <button 
-                        onClick={() => toggleStatus(forum.id)}
-                        className={`px-3 py-1 text-white text-xs rounded-lg transition-colors ${
-                          forum.status === 'active' 
-                            ? "bg-gray-600 hover:bg-gray-700" 
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {forum.status === 'active' ? 'Archive' : 'Activate'}
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(forum)}
-                        className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        Delete
+                      <button onClick={() => setDeleteId(t.id)}
+                        className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition text-sm">
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
@@ -306,82 +126,37 @@ const ForumManage = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Empty State */}
-        {filteredForums.length === 0 && (
-          <div className="text-center py-16">
-            <h3 className="text-2xl font-bold text-white mb-3">
-              No forums found
-            </h3>
-            <p className="text-gray-400">Try adjusting your search or filters</p>
+        {pagination.total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#232A36]">
+            <p className="text-gray-400 text-sm">{((page - 1) * SIZE) + 1}–{Math.min(page * SIZE, pagination.total)} of {pagination.total}</p>
+            <div className="flex gap-2">
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Prev</button>
+              <button disabled={page >= pagination.total_pages} onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Next</button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedForum && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-[#1E2130] rounded-2xl border-2 border-red-500/50 shadow-2xl shadow-red-500/30">
-            
-            {/* Modal Header */}
-            <div className="relative p-6 border-b border-red-500/30">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">
-                  Delete Forum
-                </h2>
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-500/30 text-gray-400 rounded-full hover:bg-gray-500/50 transition-colors duration-200 border border-gray-500/30"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/30">
-                  <span className="text-red-400 text-2xl">⚠️</span>
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Are you sure?</h3>
-                <p className="text-gray-400 mb-4">
-                  You are about to delete the forum <span className="text-white font-semibold">"{selectedForum.title}"</span>. This will permanently remove all posts and discussions in this forum. This action cannot be undone.
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-red-500/30 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-6 py-2 bg-gray-600 text-white font-medium rounded-xl hover:bg-gray-700 transition-all duration-200 border border-gray-500/30"
-              >
-                Cancel
-              </button>
-              
-              <button
-                onClick={confirmDelete}
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium rounded-xl hover:from-red-500 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-red-500/25 flex items-center gap-2 border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    Delete Forum
-                  </>
-                )}
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#181a20] border border-[#232A36] rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-white font-semibold text-lg mb-2">Delete Post</h3>
+            <p className="text-gray-400 text-sm mb-5">This post will be permanently deleted.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-[#232A36] text-gray-300 hover:bg-[#2a3040] transition">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition font-medium disabled:opacity-60">
+                {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ForumManage
+export default ForumManage;

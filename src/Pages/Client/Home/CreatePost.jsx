@@ -28,17 +28,10 @@ const CreatePost = ({ onPostCreated }) => {
   useEffect(() => {
     const fetchProfileInfo = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token);
-          const { success, data } = response.data;
-          if (success) {
-            setProfileInfo(data);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile info:", error);
-      }
+        const response = await getProfileInfo();
+        const { success, data } = response.data;
+        if (success) setProfileInfo(data);
+      } catch { /* silent */ }
     };
 
     fetchProfileInfo();
@@ -79,30 +72,12 @@ const CreatePost = ({ onPostCreated }) => {
       setLoading(true);
       setError('');
 
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to create a post');
-        return;
-      }
-
-      // Create FormData for file upload
       const formData = new FormData();
-      
-      // Add caption if provided
-      if (postText.trim()) {
-        formData.append('caption', postText.trim());
-      }
-      
-      // Add media file if provided
-      if (media) {
-        formData.append('post_image', media);
-      }
+      if (postText.trim()) formData.append('caption', postText.trim());
+      if (media) formData.append('post_image', media);
 
-      // Show loading toast
       const toastId = toast.loading('Creating post...');
-
-      // Call the API
-      const response = await createPost(formData, token);
+      const response = await createPost(formData);
       
       if (response.data.success) {
         console.log('Post created successfully:', response.data);

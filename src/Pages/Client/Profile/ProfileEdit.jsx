@@ -35,16 +35,10 @@ const ProfileEdit = () => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token, { page: 1, size: 1 });
-          if (response.data.success) {
-            const data = response.data.data;
-            console.log("Fetched profile data:", data);
-            console.log("Cover photo URL:", data.cover_photo);
-            console.log("Profile photo URL:", data.profile_photo);
-            
-            setProfile({
+        const response = await getProfileInfo({ page: 1, size: 1 });
+        if (response.data.success) {
+          const data = response.data.data;
+          setProfile({
               full_name: data.full_name || '',
               department: data.department || '',
               semester: data.semester || '',
@@ -62,26 +56,11 @@ const ProfileEdit = () => {
               cover_photo: data.cover_photo,
             });
             setEmail(data.email || '');
-            
-            // Set preview images - check if URLs are valid
-            if (data.profile_photo && data.profile_photo !== 'null' && data.profile_photo !== 'undefined') {
-              setAvatarPreview(data.profile_photo);
-            } else {
-              setAvatarPreview('/default-avatar.png');
-            }
-            
-            if (data.cover_photo && data.cover_photo !== 'null' && data.cover_photo !== 'undefined') {
-              setCoverPreview(data.cover_photo);
-            } else {
-              setCoverPreview('/cover.jpg');
-            }
+            setAvatarPreview(data.profile_photo && data.profile_photo !== 'null' ? data.profile_photo : '/default-avatar.png');
+            setCoverPreview(data.cover_photo && data.cover_photo !== 'null' ? data.cover_photo : '/cover.jpg');
           }
-        }
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch { /* silent */ }
+      finally { setLoading(false); }
     };
 
     fetchProfileData();
@@ -111,28 +90,16 @@ const ProfileEdit = () => {
     e.preventDefault();
     try {
       setSaving(true);
-      const token = localStorage.getItem("accessToken");
-      
-      // Create FormData for file upload
       const formData = new FormData();
-      
-      // Append all text fields
       Object.keys(profile).forEach(key => {
         if (key !== 'profile_photo' && key !== 'cover_photo') {
           formData.append(key, profile[key]);
         }
       });
-      
-      // Append files if selected
-      if (avatarFile) {
-        formData.append('profile_photo', avatarFile);
-      }
-      if (coverFile) {
-        formData.append('cover_photo', coverFile);
-      }
+      if (avatarFile) formData.append('profile_photo', avatarFile);
+      if (coverFile) formData.append('cover_photo', coverFile);
 
-      console.log("Submitting form data...");
-      const response = await updateProfile(token, formData);
+      const response = await updateProfile(formData);
       
       if (response.data.success) {
         alert('Profile updated successfully!');

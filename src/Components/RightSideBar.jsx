@@ -8,8 +8,7 @@ const RightSideBar = () => {
   useEffect(() => {
     const fetchTopMembers = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        const res = await getRightSidebarInfo(token);
+        const res = await getRightSidebarInfo();
         if (res.data.success) {
           const users = res.data.data.top_users.map((user) => ({
             id: user.id,

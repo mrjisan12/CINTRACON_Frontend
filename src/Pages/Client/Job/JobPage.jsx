@@ -3,7 +3,9 @@ import NavbarMain from '../../../Ui/NavbarMain'
 import LeftSideBar from '../../../Components/LeftSideBar'
 import { postJob, getAllJobs } from '../../../api/jobApi'
 import { toast } from 'react-toastify'
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
+import SharePopover from '../../../Components/SharePopover'
+import { FaMoneyBillWave, FaMapMarkerAlt, FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 const JobPage = () => {
   const [showPostModal, setShowPostModal] = useState(false)
@@ -319,28 +321,21 @@ const JobPage = () => {
                     </div>
 
                     {/* Job Details - Single Column Layout */}
-                    <div className="space-y-3 mb-4">
-                      {/* Salary */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-green-400 text-base">💰</span>
+                    <div className="space-y-2.5 mb-4">
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaMoneyBillWave className="text-green-400 text-sm flex-shrink-0" />
                         <span className="text-sm font-medium">{formatSalary(job.salary)}</span>
                       </div>
-                      
-                      {/* Location */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-blue-400 text-base">📍</span>
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaMapMarkerAlt className="text-blue-400 text-sm flex-shrink-0" />
                         <span className="text-sm">{job.place}</span>
                       </div>
-                      
-                      {/* Deadline */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-red-400 text-base">🗓️</span>
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaCalendarAlt className="text-red-400 text-sm flex-shrink-0" />
                         <span className="text-sm">Deadline: {formatDate(job.deadline)}</span>
                       </div>
-                      
-                      {/* Duration */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-purple-400 text-base">⏰</span>
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaClock className="text-purple-400 text-sm flex-shrink-0" />
                         <span className="text-sm">
                           {formatTime(job.start_time)} - {formatTime(job.end_time)}
                         </span>
@@ -348,17 +343,18 @@ const JobPage = () => {
                     </div>
 
                     {/* Apply Button */}
-                    <div className="flex justify-center mb-4">
-                      <a 
-                        href={job.apply_link} 
-                        target="_blank" 
+                    <div className="flex gap-2 mb-4">
+                      <a
+                        href={job.apply_link}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className={`px-4 py-2 rounded-lg text-white font-semibold text-sm
+                        className={`flex-1 px-4 py-2 rounded-lg text-white font-semibold text-sm
                           bg-gradient-to-r ${getButtonColor(index)} transform hover:scale-105 hover:shadow-lg
-                          transition-all duration-300 w-full text-center`}
+                          transition-all duration-300 text-center`}
                       >
                         Apply Now
                       </a>
+                      <SharePopover type="job" id={job.id} />
                     </div>
 
                     {/* Posted By - Avatar First, "Posted by" above Name, Time on Right */}

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { getMaintenanceStatus } from '../api/maintenanceApi';
 import { useAuth } from './AuthContext';
 
@@ -20,53 +20,62 @@ export const MaintenanceProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const { logout, isAuthenticated } = useAuth();
+    // Once admin dismisses the modal, don't re-show until maintenance is toggled off and on again
+    const adminAcknowledged = useRef(false);
 
-    // Check maintenance status
+    const { logout, isAuthenticated, isAdmin } = useAuth();
+
     const checkMaintenanceStatus = async () => {
         try {
             const response = await getMaintenanceStatus();
             if (response.data.success) {
-                const maintenanceData = response.data.data;
-                setMaintenance(maintenanceData);
+                const data = response.data.data;
+                setMaintenance(data);
 
-                // Show modal if maintenance is active
-                if (maintenanceData.status) {
-                    setShowModal(true);
-                    
-                    // If maintenance is active and user is authenticated, logout user
-                    if (isAuthenticated) {
-                        setTimeout(() => {
-                            logout();
-                        }, 3000); // Logout after 3 seconds to show the message
+                if (data.status) {
+                    // Show modal: for regular users always; for admin only if not yet acknowledged
+                    if (!isAdmin || !adminAcknowledged.current) {
+                        setShowModal(true);
+                    }
+
+                    // Only log out non-admin authenticated users
+                    if (isAuthenticated && !isAdmin) {
+                        setTimeout(() => logout(), 3000);
                     }
                 } else {
                     setShowModal(false);
+                    adminAcknowledged.current = false; // reset for next maintenance window
                 }
             }
         } catch (error) {
-            console.error('Error checking maintenance status:', error);
+            // Silently ignore — maintenance endpoint is AllowAny but may fail in edge cases
+            console.error('Maintenance status check failed:', error);
         } finally {
             setLoading(false);
         }
     };
 
+    // Admin calls this to dismiss the modal — it won't re-appear until maintenance is reset
+    const adminDismissModal = () => {
+        adminAcknowledged.current = true;
+        setShowModal(false);
+    };
+
     useEffect(() => {
         checkMaintenanceStatus();
-
-        // Check every 30 seconds
         const interval = setInterval(checkMaintenanceStatus, 30000);
-
         return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, isAdmin]);
 
     const value = {
         maintenance,
         loading,
         showModal,
         setShowModal,
+        adminDismissModal,
         checkMaintenanceStatus,
-        refreshMaintenanceStatus: checkMaintenanceStatus
+        refreshMaintenanceStatus: checkMaintenanceStatus,
     };
 
     return (

@@ -14,25 +14,14 @@ const Announcement = () => {
 const fetchAnnouncements = async () => {
   try {
     setLoading(true);
-    // Get token from localStorage or your auth context
-    const token = localStorage.getItem("accessToken");
-    
-    const response = await getAllAnnouncements(token, {
-      page: 1,
-      size: 10
-    });
-    
-    console.log("API Response:", response.data); // Add this for debugging
-    
+    const response = await getAllAnnouncements({ page: 1, size: 20 });
     if (response.data.success) {
-      // FIX: response.data.data is already the array, not response.data.data.announcements
       setAnnouncementsData(response.data.data || []);
     } else {
       setError('Failed to fetch announcements');
     }
-  } catch (err) {
+  } catch {
     setError('Error fetching announcements');
-    console.error('Error fetching announcements:', err);
   } finally {
     setLoading(false);
   }
@@ -84,6 +73,14 @@ const fetchAnnouncements = async () => {
       gradient: "linear-gradient(135deg, #EC4899 0%, #F472B6 100%)",
     },
   ];
+
+  const TYPE_STYLE = {
+    info:    { label: 'INFO',    cls: 'bg-blue-500/20 border-blue-500/30 text-blue-300' },
+    warning: { label: 'WARNING', cls: 'bg-amber-500/20 border-amber-500/30 text-amber-300' },
+    danger:  { label: 'URGENT',  cls: 'bg-red-500/20 border-red-500/30 text-red-300' },
+  };
+
+  const getTypeBadge = (type) => TYPE_STYLE[type] || TYPE_STYLE.info;
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -259,14 +256,12 @@ const fetchAnnouncements = async () => {
                     >
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          {/* Removed NEW badge since API doesn't provide this field */}
-                        </div>
-                        <span
-                          className="px-3 py-1 text-white text-xs font-bold rounded-full border bg-blue-500/20 border-blue-500/30"
-                        >
-                          ADMIN
-                        </span>
+                        <div />
+                        {announcement.type && (
+                          <span className={`px-3 py-1 text-xs font-bold rounded-full border ${getTypeBadge(announcement.type).cls}`}>
+                            {getTypeBadge(announcement.type).label}
+                          </span>
+                        )}
                       </div>
 
                       {/* Title */}

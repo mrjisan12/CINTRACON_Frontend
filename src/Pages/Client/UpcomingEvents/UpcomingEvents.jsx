@@ -3,6 +3,8 @@ import NavbarMain from '../../../Ui/NavbarMain'
 import LeftSideBar from '../../../Components/LeftSideBar'
 import { toast } from 'react-toastify'
 import { createEvent, getAllEvents, toggleEventInterest } from '../../../api/eventsApi'
+import SharePopover from '../../../Components/SharePopover'
+import { FaStar, FaRegStar, FaCheck, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaAlignLeft } from 'react-icons/fa'
 
 const EventsPage = () => {
   const [showPostModal, setShowPostModal] = useState(false)
@@ -357,53 +359,47 @@ const EventsPage = () => {
                     </div>
 
                     {/* Event Details - Single Column Layout */}
-                    <div className="space-y-3 mb-4">
-                      {/* Date */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-green-400 text-base">📅</span>
+                    <div className="space-y-2.5 mb-4">
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaCalendarAlt className="text-green-400 text-sm flex-shrink-0" />
                         <span className="text-sm font-medium">{formatDate(event.date)}</span>
                       </div>
-                      
-                      {/* Time */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-blue-400 text-base">⏰</span>
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaClock className="text-blue-400 text-sm flex-shrink-0" />
                         <span className="text-sm">{formatTime(event.date)}</span>
                       </div>
-                      
-                      {/* Location */}
-                      <div className="flex items-center gap-3 text-gray-300">
-                        <span className="text-red-400 text-base">📍</span>
+                      <div className="flex items-center gap-2.5 text-gray-300">
+                        <FaMapMarkerAlt className="text-red-400 text-sm flex-shrink-0" />
                         <span className="text-sm">{event.location}</span>
                       </div>
-                      
-                      {/* Description */}
-                      <div className="flex items-start gap-3 text-gray-300">
-                        <span className="text-purple-400 text-base">📝</span>
+                      <div className="flex items-start gap-2.5 text-gray-300">
+                        <FaAlignLeft className="text-purple-400 text-sm flex-shrink-0 mt-0.5" />
                         <span className="text-sm line-clamp-2">{event.description}</span>
                       </div>
                     </div>
 
                     {/* I'm Interested Button with Count */}
-                    <div className="flex justify-center mb-4">
-                      <button 
+                    <div className="flex gap-2 mb-4">
+                      <button
                         onClick={() => handleInterest(event.id, event.is_interested)}
-                        className={`px-4 py-2 rounded-lg text-white font-semibold text-sm
+                        className={`flex-1 px-4 py-2 rounded-lg text-white font-semibold text-sm
                           bg-gradient-to-r ${getButtonColor(event.event_type)} transform hover:scale-105 hover:shadow-lg
-                          transition-all duration-300 w-full flex items-center justify-center gap-2
+                          transition-all duration-300 flex items-center justify-center gap-2
                           ${event.is_interested ? 'ring-2 ring-yellow-400' : ''}`}
                       >
                         {event.is_interested ? (
                           <>
-                            <span>✅</span>
+                            <FaCheck className="text-sm" />
                             Interested ({event.total_interested})
                           </>
                         ) : (
                           <>
-                            <span>🤔</span>
+                            <FaRegStar className="text-sm" />
                             I'm Interested ({event.total_interested})
                           </>
                         )}
                       </button>
+                      <SharePopover type="event" id={event.id} />
                     </div>
 
                     {/* Posted By - Avatar First, "Posted by" above Name, Time on Right */}

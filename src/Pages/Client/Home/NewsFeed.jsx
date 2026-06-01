@@ -2,13 +2,19 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   FaHeart,
   FaRegComment,
-  FaShare,
-  FaThumbsUp,
+  FaBookmark,
+  FaRegBookmark,
   FaSadTear,
   FaAngry,
   FaLaughSquint,
+  FaShare,
+  FaCopy,
+  FaWhatsapp,
+  FaFacebook,
+  FaCheck,
 } from 'react-icons/fa';
-import { getNewsfeedPosts, getPostDetails, addReaction, addComment } from '../../../api/homeApi';
+import { getShareUrl } from '../../../api/publicApi';
+import { getNewsfeedPosts, getPostDetails, addReaction, addComment, bookmarkPost } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
 import { Link } from 'react-router-dom';
 import PostCaption from './PostCaption';
@@ -27,6 +33,7 @@ const NewsFeed = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [userReactions, setUserReactions] = useState({});
+  const [bookmarkedPosts, setBookmarkedPosts] = useState({});
   const [hoveredPost, setHoveredPost] = useState(null);
   const [commentModal, setCommentModal] = useState({ 
     open: false, 
@@ -37,6 +44,8 @@ const NewsFeed = () => {
   });
   const [imageModal, setImageModal] = useState({ open: false, src: '' });
   const [error, setError] = useState(null);
+  const [sharePopover, setSharePopover] = useState(null); // postId or null
+  const [copiedPost, setCopiedPost] = useState(null);
   const [profileInfo, setProfileInfo] = useState(null);
   
   const reactionTimeout = useRef();
@@ -64,17 +73,10 @@ const NewsFeed = () => {
   useEffect(() => {
     const fetchProfileInfo = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token);
-          const { success, data } = response.data;
-          if (success) {
-            setProfileInfo(data);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch navbar info:", error);
-      }
+        const response = await getProfileInfo();
+        const { success, data } = response.data;
+        if (success) setProfileInfo(data);
+      } catch { /* silent */ }
     };
 
     fetchProfileInfo();
@@ -128,25 +130,27 @@ const NewsFeed = () => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('accessToken');
-      
-      if (!token) {
-        setError('Please login to view posts');
-        setLoading(false);
-        return;
-      }
-      
-      const response = await getNewsfeedPosts(pageNum, 10, token);
+      const response = await getNewsfeedPosts(pageNum, 10);
       
       if (response.data.success) {
         const newPosts = response.data.data;
-        
+
+        // Seed bookmark and reaction state from backend data
+        const bm = {};
+        const ur = {};
+        newPosts.forEach(p => {
+          if (p.is_bookmarked) bm[p.id] = true;
+          if (p.user_reaction) ur[p.id] = p.user_reaction;
+        });
+        setBookmarkedPosts(prev => ({ ...prev, ...bm }));
+        setUserReactions(prev => append ? { ...prev, ...ur } : ur);
+
         if (append) {
           setPosts(prevPosts => [...prevPosts, ...newPosts]);
         } else {
           setPosts(newPosts);
         }
-        
+
         setHasMore(newPosts.length === 10);
         setPage(pageNum + 1);
       }
@@ -161,8 +165,7 @@ const NewsFeed = () => {
   // Fetch post details for comment modal
   const fetchPostDetails = async (postId) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await getPostDetails(postId, token);
+      const response = await getPostDetails(postId);
       if (response.data.success) {
         return response.data.data;
       }
@@ -176,21 +179,11 @@ const NewsFeed = () => {
   // Add reaction to post
   const handleAddReaction = async (postId, reactionType) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to react');
-        return;
-      }
-
       const currentReaction = userReactions[postId];
-      
-      // If clicking the same reaction, remove it
       if (currentReaction === reactionType) {
         await handleRemoveReaction(postId);
         return;
       }
-
-      console.log('Adding reaction:', { postId, reactionType });
 
       // Update UI immediately for better UX
       setPosts(prevPosts => 
@@ -224,21 +217,29 @@ const NewsFeed = () => {
       // Hide reaction picker
       setHoveredPost(null);
 
-      // Call API
-      const response = await addReaction(postId, reactionType, token);
-      
+      const response = await addReaction(postId, reactionType);
       if (response.data.success) {
-        console.log('Reaction added successfully:', response.data);
-        
-        // Optional: Refresh post data from API to ensure consistency
-        // const updatedPost = await fetchPostDetails(postId);
-        // if (updatedPost) {
-        //   setPosts(prevPosts => 
-        //     prevPosts.map(post => 
-        //       post.id === postId ? updatedPost : post
-        //     )
-        //   );
-        // }
+        const serverReaction = response.data.data?.reaction;
+        const serverUserReaction = response.data.data?.user_reaction;
+
+        // Sync actual counts from server
+        if (serverReaction) {
+          setPosts(prevPosts =>
+            prevPosts.map(post =>
+              post.id === postId ? { ...post, reaction: serverReaction } : post
+            )
+          );
+        }
+
+        // Sync user reaction from server (null means toggled off)
+        if (serverUserReaction !== undefined) {
+          setUserReactions(prev => {
+            const next = { ...prev };
+            if (serverUserReaction) next[postId] = serverUserReaction;
+            else delete next[postId];
+            return next;
+          });
+        }
 
         // Update comment modal if open
         if (commentModal.open && commentModal.post?.id === postId) {
@@ -246,7 +247,7 @@ const NewsFeed = () => {
             ...prev,
             post: {
               ...prev.post,
-              reaction: response.data.data?.reaction || prev.post.reaction
+              reaction: serverReaction || prev.post.reaction
             }
           }));
         }
@@ -282,16 +283,8 @@ const NewsFeed = () => {
   // Remove reaction from post
   const handleRemoveReaction = async (postId) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to react');
-        return;
-      }
-
       const currentReaction = userReactions[postId];
       if (!currentReaction) return;
-
-      console.log('Removing reaction:', { postId, currentReaction });
 
       // Update UI immediately for better UX
       setPosts(prevPosts => 
@@ -321,19 +314,25 @@ const NewsFeed = () => {
       // Hide reaction picker
       setHoveredPost(null);
 
-      // Call API
-      const response = await addReaction(postId, currentReaction, token);
-      
+      const response = await addReaction(postId, currentReaction);
       if (response.data.success) {
-        console.log('Reaction removed successfully:', response.data);
-        
+        const serverReaction = response.data.data?.reaction;
+
+        if (serverReaction) {
+          setPosts(prevPosts =>
+            prevPosts.map(post =>
+              post.id === postId ? { ...post, reaction: serverReaction } : post
+            )
+          );
+        }
+
         // Update comment modal if open
         if (commentModal.open && commentModal.post?.id === postId) {
           setCommentModal(prev => ({
             ...prev,
             post: {
               ...prev.post,
-              reaction: response.data.data?.reaction || prev.post.reaction
+              reaction: serverReaction || prev.post.reaction
             }
           }));
         }
@@ -369,18 +368,30 @@ const NewsFeed = () => {
     }
   };
 
+  const handleCopyShareLink = (postId) => {
+    const url = getShareUrl('post', postId);
+    navigator.clipboard.writeText(url);
+    setCopiedPost(postId);
+    setTimeout(() => setCopiedPost(null), 2000);
+  };
+
+  // Toggle bookmark on post
+  const handleBookmark = async (postId) => {
+    const wasBookmarked = bookmarkedPosts[postId];
+    setBookmarkedPosts(prev => ({ ...prev, [postId]: !wasBookmarked }));
+    try {
+      await bookmarkPost(postId);
+    } catch {
+      setBookmarkedPosts(prev => ({ ...prev, [postId]: wasBookmarked }));
+    }
+  };
+
   // Add comment to post
   const handleAddComment = async (postId) => {
     if (!commentModal.newComment.trim()) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to comment');
-        return;
-      }
-
-      const response = await addComment(postId, commentModal.newComment, token);
+      const response = await addComment(postId, commentModal.newComment);
       
       if (response.data.success) {
         const updatedPostDetails = await fetchPostDetails(postId);
@@ -506,6 +517,16 @@ const NewsFeed = () => {
     return { name: 'Love', icon: <FaHeart className="text-red-500" /> };
   };
 
+  // Close share popover on outside click
+  useEffect(() => {
+    if (!sharePopover) return;
+    const handler = (e) => {
+      if (!e.target.closest('.share-popover-wrapper')) setSharePopover(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sharePopover]);
+
   return (
     <div className="flex flex-col gap-6">
       {error && (
@@ -608,9 +629,9 @@ const NewsFeed = () => {
             <div className="flex-1 flex justify-start">
               <div className="relative group">
                 <button
-                  className={`flex items-center gap-2 text-lg font-medium px-2 py-1 transition-colors ${
-                    getUserReaction(post.id) 
-                      ? 'text-blue-400' 
+                  className={`flex items-center gap-1.5 text-sm font-medium px-2 py-1 transition-colors ${
+                    getUserReaction(post.id)
+                      ? 'text-blue-400'
                       : 'text-gray-300 hover:text-blue-400'
                   }`}
                   onMouseEnter={() => handleReactionMouseEnter(post.id)}
@@ -656,18 +677,59 @@ const NewsFeed = () => {
             {/* Comment Button */}
             <div className="flex-1 flex justify-center">
               <button
-                className="flex items-center gap-2 text-gray-300 hover:text-blue-400 text-lg font-medium px-2 py-1 transition-colors"
+                className="flex items-center gap-1.5 text-gray-300 hover:text-blue-400 text-sm font-medium px-2 py-1 transition-colors whitespace-nowrap"
                 onClick={() => handleCommentModalOpen(post)}
               >
                 <FaRegComment /> Comment ({post.total_comments || 0})
               </button>
             </div>
 
+            {/* Bookmark Button */}
+            <div className="flex-1 flex justify-center">
+              <button
+                className={`flex items-center gap-1.5 text-sm font-medium px-2 py-1 transition-colors whitespace-nowrap ${bookmarkedPosts[post.id] ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                onClick={() => handleBookmark(post.id)}
+              >
+                {bookmarkedPosts[post.id] ? <FaBookmark /> : <FaRegBookmark />}
+                {bookmarkedPosts[post.id] ? 'Saved' : 'Save'}
+              </button>
+            </div>
+
             {/* Share Button */}
-            <div className="flex-1 flex justify-end">
-              <button className="flex items-center gap-2 text-gray-300 hover:text-blue-400 text-lg font-medium px-2 py-1 transition-colors">
+            <div className="flex-1 flex justify-end relative share-popover-wrapper">
+              <button
+                className="flex items-center gap-1.5 text-gray-300 hover:text-blue-400 text-sm font-medium px-2 py-1 transition-colors whitespace-nowrap"
+                onClick={() => setSharePopover(sharePopover === post.id ? null : post.id)}
+              >
                 <FaShare /> Share
               </button>
+              {sharePopover === post.id && (
+                <div className="absolute bottom-10 right-0 bg-[#232A36] border border-[#374151] rounded-xl shadow-lg p-3 z-20 flex flex-col gap-1.5 min-w-[190px]">
+                  <button
+                    onClick={() => handleCopyShareLink(post.id)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-gray-200 text-sm transition"
+                  >
+                    {copiedPost === post.id ? <FaCheck className="text-green-400" /> : <FaCopy className="text-gray-400" />}
+                    {copiedPost === post.id ? 'Copied!' : 'Copy link'}
+                  </button>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(getShareUrl('post', post.id))}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-green-400 text-sm transition"
+                    onClick={() => setSharePopover(null)}
+                  >
+                    <FaWhatsapp /> WhatsApp
+                  </a>
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl('post', post.id))}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-blue-400 text-sm transition"
+                    onClick={() => setSharePopover(null)}
+                  >
+                    <FaFacebook /> Facebook
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

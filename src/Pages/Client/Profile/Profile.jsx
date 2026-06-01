@@ -19,19 +19,15 @@ const Profile = () => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token, { page: 1, size: 10 });
-          if (response.data.success) {
-            setProfileData(response.data.data);
-            setHasMorePosts(response.data.data.posts?.length === 10);
-          } else {
-            setError("Failed to fetch profile data");
-          }
+        const response = await getProfileInfo({ page: 1, size: 10 });
+        if (response.data.success) {
+          setProfileData(response.data.data);
+          setHasMorePosts(response.data.data.posts?.length === 10);
+        } else {
+          setError("Failed to fetch profile data");
         }
-      } catch (err) {
+      } catch {
         setError("Error fetching profile data");
-        console.error("Error fetching profile:", err);
       } finally {
         setLoading(false);
       }
@@ -46,10 +42,8 @@ const Profile = () => {
 
     try {
       setLoadingMore(true);
-      const token = localStorage.getItem("accessToken");
       const nextPage = postsPage + 1;
-      
-      const response = await getProfileInfo(token, { page: nextPage, size: 10 });
+      const response = await getProfileInfo({ page: nextPage, size: 10 });
       if (response.data.success && response.data.data.posts?.length > 0) {
         setProfileData(prev => ({
           ...prev,

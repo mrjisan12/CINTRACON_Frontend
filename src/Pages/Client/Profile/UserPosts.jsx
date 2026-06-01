@@ -7,9 +7,14 @@ import {
   FaSadTear,
   FaAngry,
   FaLaughSquint,
+  FaCopy,
+  FaWhatsapp,
+  FaFacebook,
+  FaCheck,
 } from 'react-icons/fa';
 import { getPostDetails, addReaction, addComment } from '../../../api/homeApi';
 import { getProfileInfo } from '../../../api/authApi';
+import { getShareUrl } from '../../../api/publicApi';
 import PostMenu from '../Home/PostMenu.jsx';
 
 const reactions = [
@@ -33,17 +38,22 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
   const [imageModal, setImageModal] = useState({ open: false, src: '' });
   const [error, setError] = useState(null);
   const [profileInfo, setProfileInfo] = useState(null);
-  
+  const [sharePopover, setSharePopover] = useState(null);
+  const [copiedPost, setCopiedPost] = useState(null);
+
   const reactionTimeout = useRef();
   const observer = useRef();
   const commentInputRef = useRef();
 
   const currentUserID = localStorage.getItem("user_id");
 
-  // Set posts when profilePosts prop changes
+  // Set posts when profilePosts prop changes and seed reaction state
   useEffect(() => {
     if (profilePosts) {
       setPosts(profilePosts);
+      const ur = {};
+      profilePosts.forEach(p => { if (p.user_reaction) ur[p.id] = p.user_reaction; });
+      setUserReactions(ur);
     }
   }, [profilePosts]);
 
@@ -51,21 +61,31 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
   useEffect(() => {
     const fetchProfileInfo = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token);
-          const { success, data } = response.data;
-          if (success) {
-            setProfileInfo(data);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile info:", error);
-      }
+        const response = await getProfileInfo();
+        const { success, data } = response.data;
+        if (success) setProfileInfo(data);
+      } catch { /* silent */ }
     };
 
     fetchProfileInfo();
   }, []);
+
+  // Close share popover on outside click
+  useEffect(() => {
+    if (!sharePopover) return;
+    const handler = (e) => {
+      if (!e.target.closest('.share-popover-wrapper')) setSharePopover(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sharePopover]);
+
+  const handleCopyShareLink = (postId) => {
+    const url = getShareUrl('post', postId);
+    navigator.clipboard.writeText(url);
+    setCopiedPost(postId);
+    setTimeout(() => setCopiedPost(null), 2000);
+  };
 
   // Format time difference
   const formatTime = (createdAt) => {
@@ -87,8 +107,7 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
   // Fetch post details for comment modal
   const fetchPostDetails = async (postId) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await getPostDetails(postId, token);
+      const response = await getPostDetails(postId);
       if (response.data.success) {
         return response.data.data;
       }
@@ -133,21 +152,11 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
   // Add reaction to post
   const handleAddReaction = async (postId, reactionType) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to react');
-        return;
-      }
-
       const currentReaction = userReactions[postId];
-      
-      // If clicking the same reaction, remove it
       if (currentReaction === reactionType) {
         await handleRemoveReaction(postId);
         return;
       }
-
-      console.log('Adding reaction:', { postId, reactionType });
 
       // Update UI immediately for better UX
       setPosts(prevPosts => 
@@ -181,19 +190,35 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
       // Hide reaction picker
       setHoveredPost(null);
 
-      // Call API
-      const response = await addReaction(postId, reactionType, token);
-      
+      const response = await addReaction(postId, reactionType);
       if (response.data.success) {
-        console.log('Reaction added successfully:', response.data);
-        
+        const serverReaction = response.data.data?.reaction;
+        const serverUserReaction = response.data.data?.user_reaction;
+
+        if (serverReaction) {
+          setPosts(prevPosts =>
+            prevPosts.map(post =>
+              post.id === postId ? { ...post, reaction: serverReaction } : post
+            )
+          );
+        }
+
+        if (serverUserReaction !== undefined) {
+          setUserReactions(prev => {
+            const next = { ...prev };
+            if (serverUserReaction) next[postId] = serverUserReaction;
+            else delete next[postId];
+            return next;
+          });
+        }
+
         // Update comment modal if open
         if (commentModal.open && commentModal.post?.id === postId) {
           setCommentModal(prev => ({
             ...prev,
             post: {
               ...prev.post,
-              reaction: response.data.data?.reaction || prev.post.reaction
+              reaction: serverReaction || prev.post.reaction
             }
           }));
         }
@@ -229,16 +254,8 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
   // Remove reaction from post
   const handleRemoveReaction = async (postId) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to react');
-        return;
-      }
-
       const currentReaction = userReactions[postId];
       if (!currentReaction) return;
-
-      console.log('Removing reaction:', { postId, currentReaction });
 
       // Update UI immediately for better UX
       setPosts(prevPosts => 
@@ -268,19 +285,25 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
       // Hide reaction picker
       setHoveredPost(null);
 
-      // Call API
-      const response = await addReaction(postId, currentReaction, token);
-      
+      const response = await addReaction(postId, currentReaction);
       if (response.data.success) {
-        console.log('Reaction removed successfully:', response.data);
-        
+        const serverReaction = response.data.data?.reaction;
+
+        if (serverReaction) {
+          setPosts(prevPosts =>
+            prevPosts.map(post =>
+              post.id === postId ? { ...post, reaction: serverReaction } : post
+            )
+          );
+        }
+
         // Update comment modal if open
         if (commentModal.open && commentModal.post?.id === postId) {
           setCommentModal(prev => ({
             ...prev,
             post: {
               ...prev.post,
-              reaction: response.data.data?.reaction || prev.post.reaction
+              reaction: serverReaction || prev.post.reaction
             }
           }));
         }
@@ -321,13 +344,7 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
     if (!commentModal.newComment.trim()) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setError('Please login to comment');
-        return;
-      }
-
-      const response = await addComment(postId, commentModal.newComment, token);
+      const response = await addComment(postId, commentModal.newComment);
       
       if (response.data.success) {
         const updatedPostDetails = await fetchPostDetails(postId);
@@ -544,7 +561,7 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
                     if (userReaction) {
                       handleRemoveReaction(post.id);
                     } else {
-                      handleAddReaction(post.id, 'like');
+                      handleAddReaction(post.id, 'love');
                     }
                   }}
                 >
@@ -588,10 +605,40 @@ const UserPosts = ({ profilePosts, loadMorePosts, hasMorePosts, loadingMore }) =
             </div>
 
             {/* Share Button */}
-            <div className="flex-1 flex justify-end">
-              <button className="flex items-center gap-2 text-gray-300 hover:text-blue-400 text-lg font-medium px-2 py-1 transition-colors">
+            <div className="flex-1 flex justify-end relative share-popover-wrapper">
+              <button
+                className="flex items-center gap-2 text-gray-300 hover:text-blue-400 text-lg font-medium px-2 py-1 transition-colors"
+                onClick={() => setSharePopover(sharePopover === post.id ? null : post.id)}
+              >
                 <FaShare /> Share
               </button>
+              {sharePopover === post.id && (
+                <div className="absolute bottom-10 right-0 bg-[#232A36] border border-[#374151] rounded-xl shadow-lg p-3 z-20 flex flex-col gap-1.5 min-w-[190px]">
+                  <button
+                    onClick={() => handleCopyShareLink(post.id)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-gray-200 text-sm transition"
+                  >
+                    {copiedPost === post.id ? <FaCheck className="text-green-400" /> : <FaCopy className="text-gray-400" />}
+                    {copiedPost === post.id ? 'Copied!' : 'Copy link'}
+                  </button>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(getShareUrl('post', post.id))}`}
+                    target="_blank" rel="noopener noreferrer"
+                    onClick={() => setSharePopover(null)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-green-400 text-sm transition"
+                  >
+                    <FaWhatsapp /> WhatsApp
+                  </a>
+                  <a
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl('post', post.id))}`}
+                    target="_blank" rel="noopener noreferrer"
+                    onClick={() => setSharePopover(null)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#2d3748] text-blue-400 text-sm transition"
+                  >
+                    <FaFacebook /> Facebook
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -14,7 +14,6 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
   const [editedCaption, setEditedCaption] = useState(post.caption || "");
   const [isReporting, setIsReporting] = useState(false);
 
-  const token = localStorage.getItem("accessToken");
   const isOwnPost = post.user.id === Number(currentUserId);
 
   const handleReportSubmit = async () => {
@@ -25,14 +24,10 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
 
     setIsReporting(true);
     try {
-      const response = await reportPost(
-        post.id,
-        {
-          report_type: reportType,
-          reason: reportReason.trim()
-        },
-        token
-      );
+      const response = await reportPost(post.id, {
+        report_type: reportType,
+        reason: reportReason.trim(),
+      });
 
       if (response.data.success) {
         toast.success(response.data.msg || "Post reported successfully");
@@ -93,7 +88,7 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
 
   const handleEditSubmit = async () => {
     try {
-      const response = await updatePost(post.id, { caption: editedCaption }, token);
+      const response = await updatePost(post.id, { caption: editedCaption });
       if (response.data.success) {
         toast.success(response.data.msg);
         onPostUpdated(response.data.data);
@@ -108,7 +103,7 @@ const PostMenu = ({ post, currentUserId, onPostUpdated, onPostDeleted, onReport 
 
   const handleDeleteConfirm = async () => {
     try {
-      const response = await deletePost(post.id, token);
+      const response = await deletePost(post.id);
       if (response.data.success) {
         toast.success(response.data.msg);
         onPostDeleted(post.id);

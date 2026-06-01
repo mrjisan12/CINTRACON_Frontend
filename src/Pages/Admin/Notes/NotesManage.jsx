@@ -1,207 +1,115 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
+import { FaSearch, FaTrash, FaExternalLinkAlt } from "react-icons/fa";
+import { getAdminNotes, deleteAdminNote } from "../../../api/adminApi";
+import { toast } from "react-toastify";
+
+const DEPARTMENTS = ["cse", "eee", "pharm", "civil", "eng", "bba", "llb", "msc", "mba"];
+const SIZE = 10;
 
 const NotesManage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSemester, setSelectedSemester] = useState('All');
-  const [selectedDepartment, setSelectedDepartment] = useState('All');
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [department, setDepartment] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, total_pages: 1 });
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // Sample notes data
-  const notesData = [
-    { 
-      id: 1, 
-      title: "Data Structures and Algorithms Complete Guide", 
-      semester: "3.1", 
-      department: "CSE", 
-      uploader: "John Doe", 
-      date: "2024-01-15", 
-      downloads: 145, 
-      type: "pdf",
-      description: "Complete guide to data structures including arrays, linked lists, trees, and graphs with implementation examples.",
-    },
-    { 
-      id: 2, 
-      title: "Calculus and Mathematical Foundations", 
-      semester: "1.1", 
-      department: "CSE", 
-      uploader: "Jane Smith", 
-      date: "2024-01-12", 
-      downloads: 89, 
-      type: "pdf",
-      description: "Fundamental calculus concepts with solved examples and practice problems.",
-    },
-    { 
-      id: 3, 
-      title: "Object Oriented Programming Principles", 
-      semester: "2.1", 
-      department: "CSE", 
-      uploader: "Mike Johnson", 
-      date: "2024-01-10", 
-      downloads: 167, 
-      type: "pdf",
-      description: "Comprehensive OOP concepts with Java and C++ implementation examples.",
-    },
-    { 
-      id: 4, 
-      title: "Database Management Systems", 
-      semester: "3.1", 
-      department: "CSE", 
-      uploader: "Sarah Wilson", 
-      date: "2024-01-08", 
-      downloads: 203, 
-      type: "pdf",
-      description: "SQL, normalization, and database design principles with real-world examples.",
-    },
-    { 
-      id: 5, 
-      title: "Computer Networks Fundamentals", 
-      semester: "4.1", 
-      department: "CSE", 
-      uploader: "Alex Brown", 
-      date: "2024-01-05", 
-      downloads: 98, 
-      type: "pdf",
-      description: "OSI model, TCP/IP protocols, and network security fundamentals.",
-    },
-    { 
-      id: 6, 
-      title: "Machine Learning Basics", 
-      semester: "4.2", 
-      department: "CSE", 
-      uploader: "David Lee", 
-      date: "2024-01-03", 
-      downloads: 234, 
-      type: "pdf",
-      description: "Introduction to ML algorithms, neural networks, and practical implementations.",
-    }
-  ];
+  const fetchNotes = useCallback(() => {
+    setLoading(true);
+    getAdminNotes({ search, department, page, size: SIZE })
+      .then(res => {
+        if (res.data.success) {
+          setNotes(res.data.data);
+          setPagination(res.data.pagination || { total: 0, total_pages: 1 });
+        }
+      })
+      .catch(() => toast.error("Failed to load notes"))
+      .finally(() => setLoading(false));
+  }, [search, department, page]);
 
-  // Filtered notes
-  const filteredNotes = useMemo(() => {
-    return notesData.filter(note => {
-      const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           note.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           note.id.toString().includes(searchTerm);
-      const matchesSemester = selectedSemester === 'All' || note.semester === selectedSemester;
-      const matchesDepartment = selectedDepartment === 'All' || note.department === selectedDepartment;
-      return matchesSearch && matchesSemester && matchesDepartment;
-    });
-  }, [searchTerm, selectedSemester, selectedDepartment]);
+  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+  useEffect(() => { setPage(1); }, [search, department]);
 
-  const semesters = ['All', '1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2'];
-  const departments = ['All', 'CSE', 'EEE', 'BBA', 'Pharm', 'Civil', 'English', 'Law'];
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setSelectedSemester('All');
-    setSelectedDepartment('All');
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await deleteAdminNote(deleteId);
+      if (res.data.success) {
+        toast.success("Note deleted");
+        setNotes(prev => prev.filter(n => n.id !== deleteId));
+        setDeleteId(null);
+      }
+    } catch { toast.error("Failed to delete note"); }
+    finally { setDeleting(false); }
   };
 
   return (
-    <div className="min-h-screen bg-[#181820] p-6">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Notes Management</h1>
-        <p className="text-gray-400 mb-6">
-          Admin panel for managing all uploaded notes
-        </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Notes</h1>
+        <p className="text-gray-400 text-sm mt-1">Manage all shared notes</p>
       </div>
 
-      {/* Filters Section */}
-      <div className="bg-[#1E2130] rounded-2xl p-6 border border-[#2A2D3A] mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          
-          {/* Search Bar */}
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search by ID, title or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-            />
-          </div>
-
-          {/* Department Filter */}
-          <select
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {departments.map(dept => (
-              <option key={dept} value={dept}>
-                {dept === 'All' ? 'All Departments' : dept}
-              </option>
-            ))}
-          </select>
-
-          {/* Semester Filter */}
-          <select
-            value={selectedSemester}
-            onChange={(e) => setSelectedSemester(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {semesters.map(sem => (
-              <option key={sem} value={sem}>
-                {sem === 'All' ? 'All Semesters' : `Sem ${sem}`}
-              </option>
-            ))}
-          </select>
-
-          {/* Reset Button */}
-          <button
-            onClick={clearFilters}
-            className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-500 hover:to-gray-600 transition-all duration-200 border border-gray-500/30 shadow-lg"
-          >
-            Reset
-          </button>
+      <div className="flex flex-wrap gap-3">
+        <div className="relative">
+          <FaSearch className="absolute left-3 top-2.5 text-gray-500 text-xs" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search notes..."
+            className="pl-9 pr-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500 w-56" />
         </div>
+        <select value={department} onChange={e => setDepartment(e.target.value)}
+          className="px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+          <option value="">All Departments</option>
+          {DEPARTMENTS.map(d => <option key={d} value={d}>{d.toUpperCase()}</option>)}
+        </select>
       </div>
 
-      {/* Notes Table */}
-      <div className="bg-[#1E2130] rounded-2xl border border-[#2A2D3A] overflow-hidden">
+      <div className="bg-[#181a20] border border-[#232A36] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#2A2D3A] border-b border-[#3A3D4A]">
-                <th className="px-6 py-4 text-left text-white font-semibold">ID</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Title</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Semester</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Department</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Uploader</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Date</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Downloads</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Actions</th>
+          <table className="w-full min-w-[650px]">
+            <thead className="bg-[#13151a] border-b border-[#232A36]">
+              <tr>
+                {["Title", "Dept", "Uploaded By", "Downloads", "Date", "Actions"].map(h => (
+                  <th key={h} className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider px-4 py-3">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody>
-              {filteredNotes.map((note) => (
-                <tr 
-                  key={note.id} 
-                  className="border-b border-[#3A3D4A] hover:bg-[#2A2D3A] transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="text-purple-400 font-bold">{note.id}</div>
+            <tbody className="divide-y divide-[#232A36]">
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>{[...Array(6)].map((__, j) => (
+                    <td key={j} className="px-4 py-3"><div className="h-4 bg-[#232A36] rounded animate-pulse" /></td>
+                  ))}</tr>
+                ))
+              ) : notes.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500">No notes found</td></tr>
+              ) : notes.map(n => (
+                <tr key={n.id} className="hover:bg-[#1e2028] transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="text-white text-sm font-medium truncate max-w-[200px]">{n.title}</p>
+                    {n.subject && <p className="text-gray-500 text-xs mt-0.5">{n.subject}</p>}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-white font-medium">
-                      {note.title}
-                    </div>
-                    <div className="text-gray-400 text-sm mt-1 line-clamp-1">
-                      {note.description}
-                    </div>
+                  <td className="px-4 py-3 text-gray-300 text-sm uppercase">{n.department}</td>
+                  <td className="px-4 py-3 text-gray-300 text-sm">{n.uploaded_by}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-gray-300 text-sm">{n.downloads ?? 0}</span>
                   </td>
-                  <td className="px-6 py-4 text-white">{note.semester}</td>
-                  <td className="px-6 py-4 text-white">{note.department}</td>
-                  <td className="px-6 py-4 text-white">{note.uploader}</td>
-                  <td className="px-6 py-4 text-gray-400">{note.date}</td>
-                  <td className="px-6 py-4 text-white">{note.downloads}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors">
-                        View
-                      </button>
-                      <button className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors">
-                        Delete
+                  <td className="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">
+                    {n.created_at ? new Date(n.created_at).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {n.file && (
+                        <a href={n.file} target="_blank" rel="noreferrer"
+                          className="p-1.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition text-sm">
+                          <FaExternalLinkAlt />
+                        </a>
+                      )}
+                      <button onClick={() => setDeleteId(n.id)}
+                        className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition text-sm">
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
@@ -210,19 +118,37 @@ const NotesManage = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Empty State */}
-        {filteredNotes.length === 0 && (
-          <div className="text-center py-16">
-            <h3 className="text-2xl font-bold text-white mb-3">
-              No notes found
-            </h3>
-            <p className="text-gray-400">Try adjusting your search or filters</p>
+        {pagination.total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#232A36]">
+            <p className="text-gray-400 text-sm">{((page - 1) * SIZE) + 1}–{Math.min(page * SIZE, pagination.total)} of {pagination.total}</p>
+            <div className="flex gap-2">
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Prev</button>
+              <button disabled={page >= pagination.total_pages} onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Next</button>
+            </div>
           </div>
         )}
       </div>
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#181a20] border border-[#232A36] rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-white font-semibold text-lg mb-2">Delete Note</h3>
+            <p className="text-gray-400 text-sm mb-5">This note will be permanently deleted.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-[#232A36] text-gray-300 hover:bg-[#2a3040] transition">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition font-medium disabled:opacity-60">
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default NotesManage;

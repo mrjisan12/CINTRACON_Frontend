@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getProfileInfo } from '../api/authApi';
+import { getProfileInfo } from '../api/profileApi';
 
 const AuthContext = createContext();
 
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
             if (storedToken) {
                 try {
                     // Verify token is valid by fetching user profile
-                    const response = await getProfileInfo(storedToken);
+                    const response = await getProfileInfo();
                     if (response.data.success) {
                         setToken(storedToken);
                         setUser(response.data.data);
@@ -61,10 +61,14 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
     };
 
+    // Adjust the field name below to match your backend's user role field
+    const isAdmin = !!(user?.role === 'admin' || user?.is_admin === true);
+
     const value = {
         user,
         token,
         isAuthenticated,
+        isAdmin,
         loading,
         login,
         logout,

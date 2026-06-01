@@ -9,7 +9,7 @@ import MaintenanceModal from '../../../Components/MaintenanceModal';
 
 const Login = () => {
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, isAdmin } = useAuth();
     const { maintenance, loading: maintenanceLoading } = useMaintenance();
     const location = useLocation();
     const [email, setEmail] = useState("");
@@ -20,10 +20,14 @@ const Login = () => {
 // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            const from = location.state?.from?.pathname || '/home';
-            navigate(from, { replace: true });
+            if (isAdmin) {
+                navigate('/admin/dashboard', { replace: true });
+            } else {
+                const from = location.state?.from?.pathname || '/home';
+                navigate(from, { replace: true });
+            }
         }
-    }, [isAuthenticated, navigate, location]);
+    }, [isAuthenticated, isAdmin, navigate, location]);
 
     // Check maintenance status
     useEffect(() => {
@@ -46,26 +50,33 @@ const Login = () => {
             const response = await loginApi({ email, password });
             const { msg, success, data } = response.data;
 
-            
-
             if (success) {
                 toast.success(msg);
-                
-                // AuthContext will handle the rest including redirect
                 login(data, data.accessToken);
-
-                // console.log("Login successful, user ID:", data.id);
-                // console.log("Login successful, Token:", data.accessToken);
-
-                
-                
-                // Don't navigate here - let the useEffect above handle it
+                // Redirect handled by the useEffect above
             } else {
-                toast.error("Login failed. Please try again.");
+                toast.error(msg || "Login failed. Please try again.");
             }
         } catch (error) {
+            const status = error.response?.status;
+            const errData = error.response?.data;
+
+            if (status === 401 && errData?.data?.email) {
+                // Email not verified — redirect to verify-email
+                sessionStorage.setItem('verify_email', errData.data.email);
+                toast.error(errData.msg || "Please verify your email first.");
+                navigate('/verify-email');
+                return;
+            }
+
+            if (status === 403) {
+                toast.error(errData?.msg || "Your account has been deactivated. Contact admin.");
+                return;
+            }
+
             toast.error(
-                error.response?.data?.data?.non_field_errors?.join(", ") ||
+                errData?.msg ||
+                errData?.data?.non_field_errors?.join(", ") ||
                 "An error occurred. Please try again."
             );
         } finally {

@@ -5,6 +5,7 @@ import NavbarMain from '../../../Ui/NavbarMain';
 import { getAllNotes, getNoteDetail, createNote, increaseDownloadCount } from '../../../api/noteSharingApi';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
+import SharePopover from '../../../Components/SharePopover';
 
 const NoteSharing = () => {
   const navigate = useNavigate();
@@ -733,74 +734,78 @@ const NoteSharing = () => {
                     key={note.id}
                     className="group cursor-pointer transform hover:scale-105 transition-all duration-300"
                   >
-                    <div 
-                      className="relative h-auto bg-gradient-to-br from-[#1E2130] to-[#181820] border-2 rounded-xl p-6 shadow-2xl backdrop-blur-sm flex flex-col"
+                    <div
+                      className="relative h-auto bg-gradient-to-br from-[#1E2130] to-[#181820] border-2 rounded-xl p-5 shadow-2xl backdrop-blur-sm flex flex-col gap-3"
                       style={{ borderColor: borderColor }}
                     >
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: borderColor }}></div>
-                          <span 
-                            className="px-3 py-1 text-white text-xs font-bold rounded-full border"
-                            style={{ borderColor: borderColor }}
-                          >
-                            Sem {note.semester}
-                          </span>
-                          <span className="px-2 py-1 text-white text-xs font-bold rounded-full border border-gray-500">
-                            {note.department?.toUpperCase()}
-                          </span>
-                          <span className="px-2 py-1 text-white text-xs font-bold rounded-full border border-gray-500">
+                      {/* Top: Profile + Name */}
+                      <Link
+                        to={`/user-profile/${note.user?.id}`}
+                        className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <img
+                          src={note.user?.profile_photo || '/default-avatar.png'}
+                          alt={note.user?.full_name}
+                          className="w-9 h-9 rounded-full object-cover border-2 flex-shrink-0"
+                          style={{ borderColor: borderColor }}
+                        />
+                        <div>
+                          <p className="text-white text-sm font-semibold leading-tight hover:underline">
+                            {note.user?.full_name}
+                          </p>
+                          <p className="text-gray-500 text-xs">Uploaded by</p>
+                        </div>
+                      </Link>
+
+                      {/* Badges: Semester, Department, Section */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="w-2.5 h-2.5 rounded-full animate-pulse flex-shrink-0" style={{ backgroundColor: borderColor }} />
+                        <span
+                          className="px-2.5 py-0.5 text-white text-xs font-bold rounded-full border"
+                          style={{ borderColor: borderColor }}
+                        >
+                          Sem {note.semester}
+                        </span>
+                        <span className="px-2.5 py-0.5 text-white text-xs font-bold rounded-full border border-gray-600">
+                          {note.department?.toUpperCase()}
+                        </span>
+                        {note.section && (
+                          <span className="px-2.5 py-0.5 text-white text-xs font-bold rounded-full border border-gray-600">
                             {note.section?.toUpperCase()}
                           </span>
-                        </div>
+                        )}
                       </div>
 
+                      {/* Divider */}
+                      <div className="border-t border-white/8" />
+
                       {/* Title */}
-                      <h3 className="text-white font-bold text-lg mb-3 leading-tight overflow-hidden"
-                          style={{ 
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical'
-                          }}>
+                      <h3
+                        className="text-white font-bold text-base leading-snug overflow-hidden"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+                      >
                         {note.title}
                       </h3>
 
                       {/* Description */}
-                      <p className="text-gray-400 text-sm leading-relaxed mb-4 overflow-hidden flex-grow"
-                         style={{ 
-                           display: '-webkit-box',
-                           WebkitLineClamp: 2,
-                           WebkitBoxOrient: 'vertical'
-                         }}>
+                      <p
+                        className="text-gray-400 text-sm leading-relaxed overflow-hidden flex-grow"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+                      >
                         {note.description || 'No description available.'}
                       </p>
 
                       {/* Stats */}
-                      <div className="bg-white/5 rounded-lg p-3 mb-4 border-l-4" style={{ borderColor: borderColor }}>
-                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Total Views</p>
-                        <p className="text-2xl font-bold text-white">{note.total_downloads}</p>
+                      <div className="bg-white/5 rounded-lg px-3 py-2.5 border-l-4" style={{ borderColor: borderColor }}>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-0.5">Total Views</p>
+                        <p className="text-xl font-bold text-white">{note.total_downloads}</p>
                       </div>
 
-                      {/* Footer */}
-                      <div className="flex justify-between items-center text-sm text-gray-400">
-                        <Link 
-                          to={`/user-profile/${note.user?.id}`}
-                          className="flex items-center gap-2 group cursor-pointer hover:opacity-80 transition-opacity duration-200"
-                        >
-                          {/* Profile Photo Circle */}
-                          <div className="w-6 h-6 rounded-full overflow-hidden border border-blue-500">
-                            <img 
-                              src={note.user?.profile_photo || '/default-avatar.png'} 
-                              alt={note.user?.full_name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <span className="text-white font-semibold hover:underline">
-                            {note.user?.full_name}
-                          </span>
-                        </Link>
-                        <button 
+                      {/* Footer: Share + View */}
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <SharePopover type="note" id={note.id} />
+                        <button
                           className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold rounded-lg hover:from-purple-500 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg border border-purple-500/30"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -812,7 +817,7 @@ const NoteSharing = () => {
                       </div>
 
                       {/* Left border accent */}
-                      <div className="absolute inset-y-0 left-0 w-2 rounded-l-xl" style={{ backgroundColor: borderColor }}></div>
+                      <div className="absolute inset-y-0 left-0 w-1.5 rounded-l-xl" style={{ backgroundColor: borderColor }} />
                     </div>
                   </div>
                 );

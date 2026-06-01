@@ -1,338 +1,157 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from "react";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { getAllEvents, createEvent, updateEvent, deleteEvent } from "../../../api/eventsApi";
+import { useAuth } from "../../../contexts/AuthContext";
+import { toast } from "react-toastify";
+
+const SIZE = 10;
+const EMPTY_FORM = { title: "", description: "", event_type: "academic", event_date: "", location: "", organizer: "" };
+const EVENT_TYPES = ["academic", "cultural", "sports", "workshop", "seminar", "other"];
 
 const EventsManage = () => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { token } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, total_pages: 1 });
 
-  // Sample events data
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Tech Conference 2024",
-      organizer: "Digital Bangladesh Foundation",
-      date: "2024-12-15",
-      time: "9:00 AM - 5:00 PM",
-      location: "International Convention City, Bashundhara",
-      type: "Conference",
-      description: "Join us for the biggest tech conference of the year featuring industry experts and innovative technologies.",
-      postedBy: "Shahid Al Mamin",
-      postedTime: "2h ago",
-      image: "/event1.jpg",
-      interestedCount: 24,
-      status: "upcoming"
-    },
-    {
-      id: 2,
-      title: "Startup Pitch Competition",
-      organizer: "Bangladesh Innovation Hub",
-      date: "2025-01-20",
-      time: "10:00 AM - 4:00 PM",
-      location: "GP House, Karwan Bazar",
-      type: "Competition",
-      description: "Pitch your startup idea to top investors and win exciting prizes and mentorship opportunities.",
-      postedBy: "Lamia Akter Jesmin",
-      postedTime: "5h ago",
-      image: "/event2.jpg",
-      interestedCount: 18,
-      status: "upcoming"
-    },
-    {
-      id: 3,
-      title: "UI/UX Design Workshop",
-      organizer: "DesignPro Studio",
-      date: "2024-12-22",
-      time: "2:00 PM - 6:00 PM",
-      location: "Uttara Club, Dhaka",
-      type: "Workshop",
-      description: "Hands-on workshop covering the latest design trends and tools for modern UI/UX designers.",
-      postedBy: "Nashrah Zakir Nawmi",
-      postedTime: "1d ago",
-      image: "/event3.jpg",
-      interestedCount: 32,
-      status: "upcoming"
-    },
-    {
-      id: 4,
-      title: "AI & Machine Learning Meetup",
-      organizer: "AI Innovations Ltd",
-      date: "2025-01-10",
-      time: "6:00 PM - 9:00 PM",
-      location: "Gulshan Club, Dhaka",
-      type: "Meetup",
-      description: "Network with AI enthusiasts and learn about the latest developments in machine learning.",
-      postedBy: "Alif Mahmud Talha",
-      postedTime: "3h ago",
-      image: "/event4.jpg",
-      interestedCount: 15,
-      status: "upcoming"
-    },
-    {
-      id: 5,
-      title: "Web Development Bootcamp",
-      organizer: "CodeMaster Academy",
-      date: "2025-01-05",
-      time: "9:30 AM - 6:30 PM",
-      location: "Banani Community Center",
-      type: "Bootcamp",
-      description: "Intensive 2-day bootcamp covering modern web development technologies and best practices.",
-      postedBy: "Mizanur Rahman Jisan",
-      postedTime: "8h ago",
-      image: "/event5.jpg",
-      interestedCount: 28,
-      status: "completed"
-    },
-    {
-      id: 6,
-      title: "Digital Marketing Seminar",
-      organizer: "Marketing Gurus BD",
-      date: "2024-12-28",
-      time: "11:00 AM - 3:00 PM",
-      location: "Farmgate Convention Hall",
-      type: "Seminar",
-      description: "Learn effective digital marketing strategies from industry experts and grow your business online.",
-      postedBy: "Shahid Al Mamin",
-      postedTime: "6h ago",
-      image: "/event6.jpg",
-      interestedCount: 21,
-      status: "upcoming"
-    }
-  ])
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [image, setImage] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.organizer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.id.toString().includes(searchTerm)
-    const matchesType = typeFilter === 'all' || event.type === typeFilter
-    const matchesStatus = statusFilter === 'all' || event.status === statusFilter
-    
-    return matchesSearch && matchesType && matchesStatus
-  })
+  const fetchEvents = useCallback(() => {
+    setLoading(true);
+    getAllEvents({ page, size: SIZE }, token)
+      .then(res => {
+        if (res.data.success) {
+          setEvents(res.data.data);
+          setPagination(res.data.pagination || { total: 0, total_pages: 1 });
+        }
+      })
+      .catch(() => toast.error("Failed to load events"))
+      .finally(() => setLoading(false));
+  }, [token, page]);
 
-  const eventTypes = ['all', 'Conference', 'Workshop', 'Seminar', 'Meetup', 'Competition', 'Bootcamp', 'Networking']
-  const statuses = ['all', 'upcoming', 'completed', 'cancelled']
+  useEffect(() => { fetchEvents(); }, [fetchEvents]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  }
+  const openCreate = () => {
+    setEditing(null); setForm(EMPTY_FORM); setImage(null); setModalOpen(true);
+  };
 
-  const clearFilters = () => {
-    setSearchTerm('')
-    setTypeFilter('all')
-    setStatusFilter('all')
-  }
+  const openEdit = (e) => {
+    setEditing(e);
+    setForm({
+      title: e.title || "", description: e.description || "",
+      event_type: e.event_type || "academic",
+      event_date: e.event_date || e.date_time || "",
+      location: e.location || "", organizer: e.organizer || e.organized_by || ""
+    });
+    setImage(null);
+    setModalOpen(true);
+  };
 
-  const handleDelete = (event) => {
-    setSelectedEvent(event)
-    setShowDeleteModal(true)
-  }
-
-  const confirmDelete = async () => {
-    setIsSubmitting(true)
+  const handleSave = async () => {
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    setSaving(true);
+    const fd = new FormData();
+    Object.entries(form).forEach(([k, v]) => { if (v) fd.append(k, v); });
+    if (image) fd.append("image", image);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800))
-      setEvents(events.filter(event => event.id !== selectedEvent.id))
-      alert('Event deleted successfully!')
-      setShowDeleteModal(false)
-      setSelectedEvent(null)
-    } catch (error) {
-      console.error('Error deleting event:', error)
-      alert('Error deleting event. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+      if (editing) {
+        const res = await updateEvent(editing.id, fd, token);
+        if (res.data.success) {
+          toast.success("Event updated");
+          fetchEvents();
+          setModalOpen(false);
+        }
+      } else {
+        const res = await createEvent(fd, token);
+        if (res.data.success) {
+          toast.success("Event created");
+          fetchEvents();
+          setModalOpen(false);
+        }
+      }
+    } catch { toast.error("Failed to save event"); }
+    finally { setSaving(false); }
+  };
 
-  const toggleStatus = (eventId, newStatus) => {
-    setEvents(events.map(event => 
-      event.id === eventId 
-        ? { ...event, status: newStatus }
-        : event
-    ))
-  }
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await deleteEvent(deleteId, token);
+      if (res.data.success) {
+        toast.success("Event deleted");
+        setEvents(prev => prev.filter(e => e.id !== deleteId));
+        setDeleteId(null);
+      }
+    } catch { toast.error("Failed to delete event"); }
+    finally { setDeleting(false); }
+  };
 
   return (
-    <div className="min-h-screen bg-[#181820] p-6">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Events Management</h1>
-        <p className="text-gray-400">Manage and monitor all platform events</p>
-      </div>
-
-      {/* Filters Section */}
-      <div className="bg-[#1E2130] rounded-2xl p-6 border border-[#2A2D3A] mb-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-center">
-          
-          {/* Search Bar */}
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search by ID, title or organizer..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-            />
-          </div>
-
-          {/* Event Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {eventTypes.map(type => (
-              <option key={type} value={type}>
-                {type === 'all' ? 'All Types' : type}
-              </option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full lg:w-48 bg-[#1E2130] border-2 border-[#2A2D3A] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 transition-all"
-          >
-            {statuses.map(status => (
-              <option key={status} value={status}>
-                {status === 'all' ? 'All Status' : status.charAt(0).toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </select>
-
-          {/* Reset Button */}
-          <button
-            onClick={clearFilters}
-            className="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-500 hover:to-gray-600 transition-all duration-200 border border-gray-500/30 shadow-lg"
-          >
-            Reset
-          </button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Events</h1>
+          <p className="text-gray-400 text-sm mt-1">Manage upcoming and past events</p>
         </div>
+        <button onClick={openCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
+          <FaPlus className="text-xs" /> New Event
+        </button>
       </div>
 
-      {/* Events Table */}
-      <div className="bg-[#1E2130] rounded-2xl border border-[#2A2D3A] overflow-hidden">
+      <div className="bg-[#181a20] border border-[#232A36] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#2A2D3A] border-b border-[#3A3D4A]">
-                <th className="px-6 py-4 text-left text-white font-semibold">ID</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Event Image</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Event Details</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Organizer</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Date & Time</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Location</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Type</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Interested</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Status</th>
-                <th className="px-6 py-4 text-left text-white font-semibold">Actions</th>
+          <table className="w-full min-w-[650px]">
+            <thead className="bg-[#13151a] border-b border-[#232A36]">
+              <tr>
+                {["Title", "Type", "Date", "Location", "Organizer", "Actions"].map(h => (
+                  <th key={h} className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider px-4 py-3">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody>
-              {filteredEvents.map((event) => (
-                <tr 
-                  key={event.id} 
-                  className="border-b border-[#3A3D4A] hover:bg-[#2A2D3A] transition-colors"
-                >
-                  {/* ID */}
-                  <td className="px-6 py-4">
-                    <div className="text-purple-400 font-bold">{event.id}</div>
-                  </td>
-                  
-                  {/* Event Image */}
-                  <td className="px-6 py-4">
-                    <img 
-                      src={event.image} 
-                      alt={event.title}
-                      className="w-12 h-12 rounded-lg object-cover border border-purple-500/30"
-                    />
-                  </td>
-                  
-                  {/* Event Details */}
-                  <td className="px-6 py-4">
-                    <div className="text-white font-medium">
-                      {event.title}
-                    </div>
-                    <div className="text-gray-400 text-sm mt-1 line-clamp-1">
-                      {event.description}
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <img 
-                        src={event.postedBy.avatar} 
-                        alt={event.postedBy}
-                        className="w-6 h-6 rounded-full border border-blue-500/30"
-                      />
-                      <span className="text-gray-400 text-xs">{event.postedBy}</span>
-                      <span className="text-gray-500 text-xs">•</span>
-                      <span className="text-gray-400 text-xs">{event.postedTime}</span>
+            <tbody className="divide-y divide-[#232A36]">
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>{[...Array(6)].map((__, j) => (
+                    <td key={j} className="px-4 py-3"><div className="h-4 bg-[#232A36] rounded animate-pulse" /></td>
+                  ))}</tr>
+                ))
+              ) : events.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500">No events found</td></tr>
+              ) : events.map(e => (
+                <tr key={e.id} className="hover:bg-[#1e2028] transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      {e.image && (
+                        <img src={e.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                      )}
+                      <p className="text-white text-sm font-medium truncate max-w-[160px]">{e.title}</p>
                     </div>
                   </td>
-                  
-                  {/* Organizer */}
-                  <td className="px-6 py-4 text-white">{event.organizer}</td>
-                  
-                  {/* Date & Time */}
-                  <td className="px-6 py-4">
-                    <div className="text-white">{formatDate(event.date)}</div>
-                    <div className="text-gray-400 text-sm">{event.time}</div>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 rounded-full text-xs bg-purple-500/15 text-purple-400 capitalize">{e.event_type || "—"}</span>
                   </td>
-                  
-                  {/* Location */}
-                  <td className="px-6 py-4 text-white">{event.location}</td>
-                  
-                  {/* Type */}
-                  <td className="px-6 py-4">
-                    <span className="text-white font-medium">{event.type}</span>
+                  <td className="px-4 py-3 text-gray-400 text-sm whitespace-nowrap">
+                    {(e.event_date || e.date_time) ? new Date(e.event_date || e.date_time).toLocaleDateString() : "—"}
                   </td>
-                  
-                  {/* Interested Count */}
-                  <td className="px-6 py-4 text-white">{event.interestedCount}</td>
-                  
-                  {/* Status */}
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
-                      event.status === 'upcoming' 
-                        ? "bg-green-500/20 text-green-400 border-green-500/30"
-                        : event.status === 'completed'
-                        ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
-                        : "bg-red-500/20 text-red-400 border-red-500/30"
-                    }`}>
-                      {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                    </span>
-                  </td>
-                  
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => toggleStatus(event.id, 'upcoming')}
-                        className={`px-3 py-1 text-white text-xs rounded-lg transition-colors ${
-                          event.status === 'upcoming' 
-                            ? "bg-green-600 hover:bg-green-700" 
-                            : "bg-gray-600 hover:bg-gray-700"
-                        }`}
-                      >
-                        Upcoming
+                  <td className="px-4 py-3 text-gray-300 text-sm">{e.location || "—"}</td>
+                  <td className="px-4 py-3 text-gray-300 text-sm">{e.organizer || e.organized_by || "—"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => openEdit(e)}
+                        className="p-1.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition text-sm">
+                        <FaEdit />
                       </button>
-                      <button 
-                        onClick={() => toggleStatus(event.id, 'completed')}
-                        className={`px-3 py-1 text-white text-xs rounded-lg transition-colors ${
-                          event.status === 'completed' 
-                            ? "bg-blue-600 hover:bg-blue-700" 
-                            : "bg-gray-600 hover:bg-gray-700"
-                        }`}
-                      >
-                        Complete
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(event)}
-                        className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        Delete
+                      <button onClick={() => setDeleteId(e.id)}
+                        className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition text-sm">
+                        <FaTrash />
                       </button>
                     </div>
                   </td>
@@ -341,82 +160,102 @@ const EventsManage = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Empty State */}
-        {filteredEvents.length === 0 && (
-          <div className="text-center py-16">
-            <h3 className="text-2xl font-bold text-white mb-3">
-              No events found
-            </h3>
-            <p className="text-gray-400">Try adjusting your search or filters</p>
+        {pagination.total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#232A36]">
+            <p className="text-gray-400 text-sm">{((page - 1) * SIZE) + 1}–{Math.min(page * SIZE, pagination.total)} of {pagination.total}</p>
+            <div className="flex gap-2">
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Prev</button>
+              <button disabled={page >= pagination.total_pages} onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1.5 rounded bg-[#232A36] text-gray-300 text-sm disabled:opacity-40 hover:bg-[#2a3040] transition">Next</button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-[#1E2130] rounded-2xl border-2 border-red-500/50 shadow-2xl shadow-red-500/30">
-            
-            {/* Modal Header */}
-            <div className="relative p-6 border-b border-red-500/30">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">
-                  Delete Event
-                </h2>
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-500/30 text-gray-400 rounded-full hover:bg-gray-500/50 transition-colors duration-200 border border-gray-500/30"
-                >
-                  ✕
-                </button>
+      {/* Create / Edit Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#181a20] border border-[#232A36] rounded-xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-white font-semibold text-lg mb-5">{editing ? "Edit Event" : "New Event"}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-400 text-xs font-medium mb-1.5 block">Title *</label>
+                <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="Event title"
+                  className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500" />
               </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/30">
-                  <span className="text-red-400 text-2xl">⚠️</span>
+              <div>
+                <label className="text-gray-400 text-xs font-medium mb-1.5 block">Description</label>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Event description..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500 resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-xs font-medium mb-1.5 block">Type</label>
+                  <select value={form.event_type} onChange={e => setForm(f => ({ ...f, event_type: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 capitalize">
+                    {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Are you sure?</h3>
-                <p className="text-gray-400 mb-4">
-                  You are about to delete the event <span className="text-white font-semibold">"{selectedEvent.title}"</span>. This will permanently remove the event and all related data. This action cannot be undone.
-                </p>
+                <div>
+                  <label className="text-gray-400 text-xs font-medium mb-1.5 block">Date</label>
+                  <input type="datetime-local" value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-xs font-medium mb-1.5 block">Location</label>
+                  <input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder="e.g. Auditorium"
+                    className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500" />
+                </div>
+                <div>
+                  <label className="text-gray-400 text-xs font-medium mb-1.5 block">Organizer</label>
+                  <input value={form.organizer} onChange={e => setForm(f => ({ ...f, organizer: e.target.value }))}
+                    placeholder="Organizer name"
+                    className="w-full px-3 py-2 bg-[#232A36] border border-[#2d3748] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 placeholder-gray-500" />
+                </div>
+              </div>
+              <div>
+                <label className="text-gray-400 text-xs font-medium mb-1.5 block">Image (optional)</label>
+                <input type="file" accept="image/*" onChange={e => setImage(e.target.files[0])}
+                  className="w-full text-sm text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30 cursor-pointer" />
               </div>
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-red-500/30 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-6 py-2 bg-gray-600 text-white font-medium rounded-xl hover:bg-gray-700 transition-all duration-200 border border-gray-500/30"
-              >
-                Cancel
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setModalOpen(false)} disabled={saving}
+                className="flex-1 px-4 py-2 rounded-lg bg-[#232A36] text-gray-300 hover:bg-[#2a3040] transition">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium disabled:opacity-60">
+                {saving ? "Saving..." : (editing ? "Update" : "Create")}
               </button>
-              
-              <button
-                onClick={confirmDelete}
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-gradient-to-r from-red-600 to-orange-600 text-white font-medium rounded-xl hover:from-red-500 hover:to-orange-500 transform hover:scale-105 transition-all duration-200 shadow-lg shadow-red-500/25 flex items-center gap-2 border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    Delete Event
-                  </>
-                )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#181a20] border border-[#232A36] rounded-xl p-6 w-full max-w-sm">
+            <h3 className="text-white font-semibold text-lg mb-2">Delete Event</h3>
+            <p className="text-gray-400 text-sm mb-5">This event will be permanently deleted.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteId(null)} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-[#232A36] text-gray-300 hover:bg-[#2a3040] transition">Cancel</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition font-medium disabled:opacity-60">
+                {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default EventsManage
+export default EventsManage;

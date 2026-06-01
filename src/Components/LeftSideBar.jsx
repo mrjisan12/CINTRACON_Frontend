@@ -30,17 +30,10 @@ const LeftSideBar = () => {
   useEffect(() => {
     const fetchProfileInfo = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getProfileInfo(token);
-          const { success, data } = response.data;
-          if (success) {
-            setProfileInfo(data);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch profile info:", error);
-      }
+        const response = await getProfileInfo();
+        const { success, data } = response.data;
+        if (success) setProfileInfo(data);
+      } catch { /* silent */ }
     };
 
     fetchProfileInfo();
@@ -50,19 +43,11 @@ const LeftSideBar = () => {
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        const token = localStorage.getItem("accessToken");
-        if (token) {
-          const response = await getDevelopers(token);
-          const { success, data } = response.data;
-          if (success) {
-            setDevelopers(data);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch developers:", error);
-      } finally {
-        setLoading(false);
-      }
+        const response = await getDevelopers();
+        const { success, data } = response.data;
+        if (success) setDevelopers(data);
+      } catch { /* silent */ }
+      finally { setLoading(false); }
     };
 
     fetchDevelopers();

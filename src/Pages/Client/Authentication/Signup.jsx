@@ -75,11 +75,12 @@ const Signup = () => {
   try {
     setIsLoading(true);
     const response = await signup(toSend);
-    const { msg, success /*, data */ } = response?.data ?? {};
+    const { msg, success } = response?.data ?? {};
 
     if (success) {
-      toast.success(msg || "Signed up successfully!");
-      navigate("/login");
+      toast.success(msg || "Signed up successfully! Check your email for OTP.");
+      sessionStorage.setItem('verify_email', formData.email);
+      navigate("/verify-email");
     } else {
       toast.error(msg || "Signup failed. Please try again.");
     }
